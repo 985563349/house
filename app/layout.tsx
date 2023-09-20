@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Link from 'next/link';
-import { Navbar, NavbarContent, NavbarItem } from '@nextui-org/navbar';
 
-import { ThemeToggle } from '@/components/theme-toggle';
-
+import { Navbar } from '@/components/navbar';
 import { Providers } from './providers';
 
 import './globals.css';
@@ -21,29 +18,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <Navbar>
-            <NavbarContent>
-              <NavbarItem>
-                <Link href="/">Home</Link>
-              </NavbarItem>
-
-              <NavbarItem>
-                <Link href="/blog">Blog</Link>
-              </NavbarItem>
-
-              <NavbarItem>
-                <Link href="/projects">Projects</Link>
-              </NavbarItem>
-            </NavbarContent>
-
-            <NavbarContent justify="end">
-              <NavbarItem>
-                <ThemeToggle />
-              </NavbarItem>
-            </NavbarContent>
-          </Navbar>
-
-          <main>{children}</main>
+          <Navbar />
+          <main className="mx-auto max-w-5xl px-6">{children}</main>
         </Providers>
       </body>
     </html>
