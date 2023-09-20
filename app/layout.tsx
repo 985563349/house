@@ -1,7 +1,13 @@
-import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Link from 'next/link';
+import { Navbar, NavbarContent, NavbarItem } from '@nextui-org/navbar';
+
+import { ThemeToggle } from '@/components/theme-toggle';
+
 import { Providers } from './providers';
+
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,9 +18,33 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar>
+            <NavbarContent>
+              <NavbarItem>
+                <Link href="/">Home</Link>
+              </NavbarItem>
+
+              <NavbarItem>
+                <Link href="/blog">Blog</Link>
+              </NavbarItem>
+
+              <NavbarItem>
+                <Link href="/projects">Projects</Link>
+              </NavbarItem>
+            </NavbarContent>
+
+            <NavbarContent justify="end">
+              <NavbarItem>
+                <ThemeToggle />
+              </NavbarItem>
+            </NavbarContent>
+          </Navbar>
+
+          <main>{children}</main>
+        </Providers>
       </body>
     </html>
   );
