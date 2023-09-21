@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@nextui-org/switch';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
+import { RiMoonFill, RiSunFill } from 'react-icons/ri';
 
 const ThemeToggle: React.FC = () => {
   const [mounted, setMounted] = useState(false);
@@ -30,12 +30,12 @@ const ThemeToggle: React.FC = () => {
       }}
       startContent={
         <i>
-          <SunIcon className="w-4 h-4 text-black" />
+          <RiSunFill className="w-4 h-4 text-black" />
         </i>
       }
       endContent={
         <i>
-          <MoonIcon className="w-4 h-4 text-white" />
+          <RiMoonFill className="w-4 h-4 text-white" />
         </i>
       }
       onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}

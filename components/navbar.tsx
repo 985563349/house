@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Navbar, NavbarContent, NavbarItem } from '@nextui-org/navbar';
 import { Link } from '@nextui-org/link';
+import { RiGithubFill } from 'react-icons/ri';
 
 import { ThemeToggle } from './theme-toggle';
 
@@ -32,7 +33,11 @@ const CustomNavbar: React.FC = () => {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem></NavbarItem>
+        <NavbarItem>
+          <Link href="#" className="block">
+            <RiGithubFill className="w-6 h-6 text-foreground" />
+          </Link>
+        </NavbarItem>
 
         <NavbarItem>
           <ThemeToggle />

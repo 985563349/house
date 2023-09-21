@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.0.18",
     "@nextui-org/react": "^2.1.13",
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
@@ -23,6 +22,7 @@
     "postcss": "8.4.30",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-icons": "^4.11.0",
     "tailwindcss": "3.3.3",
     "typescript": "5.2.2"
   }
