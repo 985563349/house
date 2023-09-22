@@ -26,7 +26,7 @@ const ThemeToggle: React.FC = () => {
       classNames={{
         wrapper: 'w-12 bg-black group-data-[selected=true]:bg-white',
         thumb:
-          'bg-yellow-500 group-data-[selected=true]:ml-6 group-data-[selected=true]:bg-blue-500',
+          'bg-yellow-400 group-data-[selected=true]:ml-6 group-data-[selected=true]:bg-blue-500',
       }}
       startContent={
         <i>

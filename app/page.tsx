@@ -7,7 +7,7 @@ export default async function Home() {
   return (
     <div>
       <section>
-        <h1 className="my-10 font-extrabold text-5xl text-center">{data.page.title}</h1>
+        <h1 className="my-10 font-extrabold text-6xl text-center">{data.page.title}</h1>
 
         <TinaMarkdown
           content={data.page.body}

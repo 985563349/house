@@ -10,7 +10,7 @@ export default async function Post({ params }: { params: { slug: string } }) {
   const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
 
   return (
-    <article className="prose dark:prose-invert">
+    <article className="prose dark:prose-invert prose-p:text-lg">
       <h1>{data.post.title}</h1>
 
       <TinaMarkdown

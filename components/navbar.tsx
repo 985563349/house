@@ -18,7 +18,7 @@ const CustomNavbar: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    <Navbar height="5rem" shouldHideOnScroll>
+    <Navbar height="5.5rem" shouldHideOnScroll>
       <NavbarContent>
         {links.map((link) => {
           const isActive =
@@ -26,7 +26,7 @@ const CustomNavbar: React.FC = () => {
 
           return (
             <NavbarItem key={link.name}>
-              <Link href={link.href} className={cn('animated-link', { show: isActive })}>
+              <Link href={link.href} className={cn('animated-link', 'text-lg', { show: isActive })}>
                 {link.name}
               </Link>
             </NavbarItem>
