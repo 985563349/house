@@ -10,6 +10,15 @@ const config: Config = {
     './node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}',
   ],
   darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        text: {
+          link: 'rgb(var(--color-text-link) / <alpha-value>)',
+        },
+      },
+    },
+  },
   plugins: [
     nextui({
       themes: {
