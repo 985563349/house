@@ -1,4 +1,4 @@
-export default function Page() {
+export default function Projects() {
   return (
     <div>
       <ul className="my-6 ml-6 list-disc [&>li]:mt-2">

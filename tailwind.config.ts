@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import { nextui } from '@nextui-org/react';
+import typography from '@tailwindcss/typography';
 
 const config: Config = {
   content: [
@@ -26,6 +27,7 @@ const config: Config = {
         },
       },
     }),
+    typography,
   ],
 };
 

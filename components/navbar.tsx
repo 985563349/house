@@ -17,7 +17,7 @@ const CustomNavbar: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    <Navbar shouldHideOnScroll>
+    <Navbar height="5rem" shouldHideOnScroll>
       <NavbarContent>
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
