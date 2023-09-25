@@ -40,7 +40,7 @@
     );
   }
 
-  .animated-link.show:after {
+  .animated-link.active:after {
     transform: translateZ(0) scale(1);
   }
 }

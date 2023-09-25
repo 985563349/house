@@ -26,7 +26,10 @@ const CustomNavbar: React.FC = () => {
 
           return (
             <NavbarItem key={link.name}>
-              <Link href={link.href} className={cn('animated-link', 'text-lg', { show: isActive })}>
+              <Link
+                href={link.href}
+                className={cn('animated-link', 'text-lg', { active: isActive })}
+              >
                 {link.name}
               </Link>
             </NavbarItem>
