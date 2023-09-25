@@ -6,7 +6,19 @@ import { StackBlitzEmbed } from '@/components/stack-blitz-embed';
 import { GitHubGistEmbed } from '@/components/github-gist-embed';
 import { CodeBlock } from '@/components/code-block';
 
-export default async function Post({ params }: { params: { slug: string } }) {
+type Props = {
+  params: { slug: string };
+};
+
+export async function generateMetadata({ params }: Props) {
+  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
+
+  return {
+    title: data.post.title,
+  };
+}
+
+export default async function Post({ params }: Props) {
   const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
 
   return (
