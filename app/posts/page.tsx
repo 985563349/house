@@ -3,7 +3,7 @@ import Link from 'next/link';
 import client from '@/tina/__generated__/client';
 
 export default async function Posts() {
-  const { data } = await client.queries.postConnection();
+  const { data } = await client.queries.postConnection({ sort: 'date', last: -1 });
 
   return (
     <div>
