@@ -4,10 +4,12 @@
 
 @layer base {
   .light {
+    --color-primary-blue: 138 230 251;
     --color-text-link: 6 182 212;
   }
 
   .dark {
+    --color-primary-blue: 59 130 246;
     --color-text-link: 96 165 250;
   }
 }

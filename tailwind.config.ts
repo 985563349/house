@@ -16,6 +16,9 @@ const config: Config = {
         text: {
           link: 'rgb(var(--color-text-link) / <alpha-value>)',
         },
+        primary: {
+          blue: 'rgb(var(--color-primary-blue) / <alpha-value>)',
+        },
       },
     },
   },

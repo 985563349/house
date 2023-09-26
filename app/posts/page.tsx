@@ -15,7 +15,13 @@ export default async function Posts() {
       <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
         {data.postConnection.edges?.map((post) => (
           <li key={post?.node?.id}>
-            <Link href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}>
+            <Link
+              href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}
+              className="transition-[background-size] duration-300 
+                        bg-gradient-to-r bg-left-bottom bg-no-repeat
+                        bg-[length:0%_55%] hover:bg-[length:100%_55%] dark:bg-[length:0%_2px] hover:dark:bg-[length:100%_2px]
+                        from-primary-blue to-primary-blue dark:from-primary-blue dark:to-primary-blue"
+            >
               {post?.node?.title}
             </Link>
           </li>
