@@ -10,20 +10,28 @@ type Props = {
   params: { slug: string };
 };
 
-function fetchPostBySlug(slug: string) {
-  return client.queries.post({ relativePath: `${slug}.mdx` });
-}
-
 export async function generateMetadata({ params }: Props) {
-  const { data } = await fetchPostBySlug(params.slug);
+  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
 
   return {
     title: data.post.title,
   };
 }
 
+export async function generateStaticParams() {
+  const { data } = await client.queries.postConnection();
+
+  if (!data.postConnection.edges) {
+    return [];
+  }
+
+  return data.postConnection.edges.map((post) => ({
+    slug: post?.node?._sys.breadcrumbs.join('/'),
+  }));
+}
+
 export default async function Post({ params }: Props) {
-  const { data } = await fetchPostBySlug(params.slug);
+  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
 
   return (
     <article className="prose dark:prose-invert prose-p:text-lg">
