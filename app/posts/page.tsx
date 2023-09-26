@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import client from '@/tina/__generated__/client';
+
+export const metadata: Metadata = {
+  title: 'Blog',
+};
 
 export default async function Posts() {
   const { data } = await client.queries.postConnection({ sort: 'date', last: -1 });

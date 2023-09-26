@@ -10,8 +10,12 @@ type Props = {
   params: { slug: string };
 };
 
+function fetchPostBySlug(slug: string) {
+  return client.queries.post({ relativePath: `${slug}.mdx` });
+}
+
 export async function generateMetadata({ params }: Props) {
-  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
+  const { data } = await fetchPostBySlug(params.slug);
 
   return {
     title: data.post.title,
@@ -19,7 +23,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function Post({ params }: Props) {
-  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
+  const { data } = await fetchPostBySlug(params.slug);
 
   return (
     <article className="prose dark:prose-invert prose-p:text-lg">
