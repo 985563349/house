@@ -14,6 +14,7 @@ const config: Config = {
     extend: {
       colors: {
         text: {
+          muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
           link: 'rgb(var(--color-text-link) / <alpha-value>)',
         },
         primary: {

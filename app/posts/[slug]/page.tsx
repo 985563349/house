@@ -1,4 +1,5 @@
 import { TinaMarkdown } from 'tinacms/dist/rich-text';
+import { format } from 'date-fns';
 
 import client from '@/tina/__generated__/client';
 
@@ -35,7 +36,10 @@ export default async function Post({ params }: Props) {
 
   return (
     <article className="prose dark:prose-invert prose-p:text-lg">
-      <h1>{data.post.title}</h1>
+      <h1 className="mb-3">{data.post.title}</h1>
+      <time className="text-text-muted" dateTime={data.post.date}>
+        {format(new Date(data.post.date), 'yyyy-MM-dd')}
+      </time>
 
       <TinaMarkdown
         content={data.post.body}

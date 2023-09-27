@@ -37,6 +37,9 @@ export default defineConfig({
             type: 'datetime',
             name: 'date',
             label: 'Date Posted',
+            ui: {
+              dateFormat: 'YYYY-MM-DD',
+            },
             required: true,
           },
           {
