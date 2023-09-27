@@ -8,7 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Posts() {
-  const { data } = await client.queries.postConnection({ sort: 'date', last: -1 });
+  const { data } = await client.queries.postConnection({
+    sort: 'date',
+    filter: { draft: { eq: false } },
+  });
 
   return (
     <div>

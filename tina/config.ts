@@ -1,7 +1,7 @@
 import { defineConfig } from 'tinacms';
 
 // Your hosting provider likely exposes this as an environment variable
-const branch = process.env.HEAD || process.env.VERCEL_GIT_COMMIT_REF || 'main';
+const branch = process.env.TINA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || process.env.HEAD;
 
 export default defineConfig({
   branch,
@@ -38,6 +38,13 @@ export default defineConfig({
             name: 'date',
             label: 'Date Posted',
             required: true,
+          },
+          {
+            type: 'boolean',
+            name: 'draft',
+            label: 'Draft',
+            required: true,
+            description: 'If this is checked the post will not be published',
           },
           {
             type: 'rich-text',
