@@ -20,7 +20,7 @@ export default async function Posts() {
       <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
         {data.postConnection.edges?.map((post) => (
           <li key={post?.node?.id}>
-            <div className="grid grid-cols-[1fr] md:grid-cols-[1fr_auto] gap-2">
+            <div className="grid grid-cols-[1fr] md:grid-cols-[1fr_auto] sm:gap-2">
               <div>
                 <Link
                   href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}

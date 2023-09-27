@@ -8,9 +8,10 @@ import { RiGithubFill } from 'react-icons/ri';
 
 import { ThemeToggle } from './theme-toggle';
 
-const links = [
+const menuItems = [
   { name: 'Home', href: '/' },
   { name: 'Blog', href: '/posts' },
+  { name: 'Notes', href: '/notes' },
   { name: 'Projects', href: '/projects' },
 ];
 
@@ -20,17 +21,17 @@ const CustomNavbar: React.FC = () => {
   return (
     <Navbar height="5.5rem" shouldHideOnScroll>
       <NavbarContent>
-        {links.map((link) => {
+        {menuItems.map((item) => {
           const isActive =
-            link.href === '/' ? pathname === link.href : pathname?.startsWith(link.href);
+            item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
 
           return (
-            <NavbarItem key={link.name}>
+            <NavbarItem key={item.name}>
               <Link
-                href={link.href}
+                href={item.href}
                 className={cn('animated-link', 'text-lg', { active: isActive })}
               >
-                {link.name}
+                {item.name}
               </Link>
             </NavbarItem>
           );
