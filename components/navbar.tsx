@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { cn } from '@nextui-org/react';
 import {
   Navbar,
@@ -11,7 +12,7 @@ import {
   NavbarMenu,
   NavbarMenuItem,
 } from '@nextui-org/navbar';
-import Link from 'next/link';
+import { Button } from '@nextui-org/button';
 import { RiGithubFill } from 'react-icons/ri';
 
 import { ThemeToggle } from './theme-toggle';
@@ -57,10 +58,12 @@ const CustomNavbar: React.FC = () => {
         })}
       </NavbarContent>
 
-      <NavbarContent justify="end">
+      <NavbarContent className="gap-2" justify="end">
         <NavbarItem>
           <Link href="https://github.com/985563349" target="_blank" className="block">
-            <RiGithubFill className="w-6 h-6 text-foreground" />
+            <Button variant="light" isIconOnly>
+              <RiGithubFill className="w-6 h-6 text-foreground" />
+            </Button>
           </Link>
         </NavbarItem>
 
