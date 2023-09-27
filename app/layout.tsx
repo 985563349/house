@@ -8,7 +8,7 @@ import { Providers } from './providers';
 
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
