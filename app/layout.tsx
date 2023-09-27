@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
 
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
+
 import { Providers } from './providers';
 
 import './globals.css';
@@ -24,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Navbar />
           <main className="mx-auto max-w-5xl px-6">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>
