@@ -21,6 +21,27 @@ export default defineConfig({
   schema: {
     collections: [
       {
+        name: 'page',
+        label: 'Pages',
+        path: 'content/pages',
+        format: 'mdx',
+        fields: [
+          {
+            type: 'string',
+            name: 'title',
+            label: 'Title',
+            isTitle: true,
+            required: true,
+          },
+          {
+            type: 'rich-text',
+            name: 'body',
+            label: 'Body',
+            isBody: true,
+          },
+        ],
+      },
+      {
         name: 'post',
         label: 'Posts',
         path: 'content/posts',
@@ -96,27 +117,6 @@ export default defineConfig({
           // This is an DEMO router. You can remove this to fit your site
           router: ({ document }) => `/demo/posts/${document._sys.filename}`,
         },
-      },
-      {
-        name: 'page',
-        label: 'Pages',
-        path: 'content/pages',
-        format: 'mdx',
-        fields: [
-          {
-            type: 'string',
-            name: 'title',
-            label: 'Title',
-            isTitle: true,
-            required: true,
-          },
-          {
-            type: 'rich-text',
-            name: 'body',
-            label: 'Body',
-            isBody: true,
-          },
-        ],
       },
     ],
   },
