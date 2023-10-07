@@ -118,6 +118,83 @@ export default defineConfig({
           router: ({ document }) => `/demo/posts/${document._sys.filename}`,
         },
       },
+      {
+        name: 'note',
+        label: 'Notes',
+        path: 'content/notes',
+        format: 'mdx',
+        fields: [
+          {
+            type: 'string',
+            name: 'title',
+            label: 'Title',
+            isTitle: true,
+            required: true,
+          },
+          {
+            type: 'datetime',
+            name: 'date',
+            label: 'Date Posted',
+            ui: {
+              dateFormat: 'YYYY-MM-DD',
+            },
+            required: true,
+          },
+          {
+            type: 'boolean',
+            name: 'draft',
+            label: 'Draft',
+            required: true,
+            description: 'If this is checked the post will not be published',
+          },
+          {
+            type: 'rich-text',
+            name: 'body',
+            label: 'Body',
+            isBody: true,
+            templates: [
+              {
+                name: 'StackBlitzEmbed',
+                label: 'StackBlitz Embed',
+                match: {
+                  start: '{%',
+                  end: '%}',
+                  name: 'stackblitz',
+                },
+                fields: [
+                  {
+                    name: 'url',
+                    label: 'url',
+                    type: 'string',
+                    required: true,
+                  },
+                ],
+              },
+              {
+                name: 'GitHubGistEmbed',
+                label: 'GitHub Gist Embed',
+                match: {
+                  start: '{%',
+                  end: '%}',
+                  name: 'githubgist',
+                },
+                fields: [
+                  {
+                    name: 'id',
+                    label: 'id',
+                    type: 'string',
+                    required: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        ui: {
+          // This is an DEMO router. You can remove this to fit your site
+          router: ({ document }) => `/demo/notes/${document._sys.filename}`,
+        },
+      },
     ],
   },
 });
