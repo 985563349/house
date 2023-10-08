@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
           <a
             href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
             target="_blank"
-            className="mr-1 underline"
+            className="mr-1 underline hover:text-black"
           >
             CC BY-NC-SA 4.0
           </a>
