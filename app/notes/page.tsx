@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import client from '@/tina/__generated__/client';
 
 export const metadata: Metadata = {
-  title: 'Note',
+  title: 'Notes',
 };
 
 export default async function Notes() {
@@ -34,8 +34,8 @@ export default async function Notes() {
               </div>
 
               <div>
-                <time className="text-sm italic text-text-muted" dateTime={note?.node?.date}>
-                  {format(new Date(note?.node?.date!), 'yyyy-MM-dd')}
+                <time className="text-sm text-text-muted" dateTime={note?.node?.date}>
+                  {format(new Date(note?.node?.date!), 'MM-dd')}
                 </time>
               </div>
             </div>

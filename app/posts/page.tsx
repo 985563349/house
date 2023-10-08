@@ -34,8 +34,8 @@ export default async function Posts() {
               </div>
 
               <div>
-                <time className="text-sm italic text-text-muted" dateTime={post?.node?.date}>
-                  {format(new Date(post?.node?.date!), 'yyyy-MM-dd')}
+                <time className="text-sm text-text-muted" dateTime={post?.node?.date}>
+                  {format(new Date(post?.node?.date!), 'MM-dd')}
                 </time>
               </div>
             </div>
