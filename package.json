@@ -2,6 +2,7 @@
   "name": "house",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "tinacms dev -c \"next dev --turbo\"",
     "build": "tinacms build && next build",
