@@ -55,6 +55,12 @@ export default defineConfig({
             required: true,
           },
           {
+            type: 'reference',
+            name: 'topic',
+            label: 'Topic',
+            collections: ['topic'],
+          },
+          {
             type: 'datetime',
             name: 'date',
             label: 'Date Posted',
@@ -132,6 +138,12 @@ export default defineConfig({
             required: true,
           },
           {
+            type: 'reference',
+            name: 'topic',
+            label: 'Topic',
+            collections: ['topic'],
+          },
+          {
             type: 'datetime',
             name: 'date',
             label: 'Date Posted',
@@ -194,6 +206,20 @@ export default defineConfig({
           // This is an DEMO router. You can remove this to fit your site
           router: ({ document }) => `/demo/notes/${document._sys.filename}`,
         },
+      },
+      {
+        name: 'topic',
+        label: 'Topics',
+        path: 'content/topics',
+        format: 'mdx',
+        fields: [
+          {
+            type: 'string',
+            name: 'name',
+            label: 'Text',
+            required: true,
+          },
+        ],
       },
     ],
   },
