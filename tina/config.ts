@@ -216,7 +216,7 @@ export default defineConfig({
           {
             type: 'string',
             name: 'name',
-            label: 'Text',
+            label: 'Name',
             required: true,
           },
         ],
