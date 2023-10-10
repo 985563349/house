@@ -107,7 +107,7 @@ export const getStaticPaths = async () => {
     paths: notesListData.data.noteConnection.edges?.map((note) => ({
       params: { filename: note?.node?._sys.filename },
     })),
-    fallback: true,
+    fallback: 'blocking',
   };
 };
 
