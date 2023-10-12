@@ -1,8 +1,15 @@
+import { unstable_cache } from 'next/cache';
 import client from '@/tina/__generated__/client';
 import { TinaMarkdown } from 'tinacms/dist/rich-text';
 
 export default async function Home() {
-  const { data } = await client.queries.page({ relativePath: 'home.mdx' });
+  const cacheKey = 'home';
+
+  const { data } = await unstable_cache(
+    () => client.queries.page({ relativePath: 'home.mdx' }),
+    [cacheKey],
+    { tags: [cacheKey] }
+  )();
 
   return (
     <div>
