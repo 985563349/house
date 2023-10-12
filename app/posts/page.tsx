@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -9,11 +10,18 @@ export const metadata: Metadata = {
 };
 
 export default async function Posts() {
-  const { data } = await client.queries.postConnection({
-    last: -1,
-    sort: 'date',
-    filter: { draft: { eq: false } },
-  });
+  const cacheKey = 'posts';
+
+  const { data } = await unstable_cache(
+    () =>
+      client.queries.postConnection({
+        last: -1,
+        sort: 'date',
+        filter: { draft: { eq: false } },
+      }),
+    [cacheKey],
+    { tags: [cacheKey] }
+  )();
 
   return (
     <div>

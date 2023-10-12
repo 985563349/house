@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { TinaMarkdown } from 'tinacms/dist/rich-text';
 import { format } from 'date-fns';
 
@@ -32,7 +33,13 @@ export async function generateStaticParams() {
 }
 
 export default async function Note({ params }: Props) {
-  const { data } = await client.queries.note({ relativePath: `${params.slug}.mdx` });
+  const cacheKey = `note-${params.slug}`;
+
+  const { data } = await unstable_cache(
+    () => client.queries.note({ relativePath: `${params.slug}.mdx` }),
+    [cacheKey],
+    { tags: [cacheKey] }
+  )();
 
   return (
     <article className="prose dark:prose-invert prose-p:text-lg">
