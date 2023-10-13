@@ -28,3 +28,23 @@ CubeMap (立方体贴图) 是一种由六个独立的正方形纹理组成的集
 EquirectangularMap （等距柱状投影）。
 
 ## ThreeJS 中的环境贴图
+
+在 ThreeJS 中 CubeMap 可以通过 **CubeTextureLoader** 方法加载。
+
+```javascript
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+
+const environmentMap = cubeTextureLoader.load([
+  '/textures/environmentMaps/px.png',
+  '/textures/environmentMaps/nx.png',
+  '/textures/environmentMaps/py.png',
+  '/textures/environmentMaps/ny.png',
+  '/textures/environmentMaps/pz.png',
+  '/textures/environmentMaps/nz.png',
+])
+
+// 使用环境贴图作为场景背景
+scene.background = environmentMap;
+// 将该贴图设置为场景中所有物理材质的环境贴图
+scene.environment = environmentMap;
+```
