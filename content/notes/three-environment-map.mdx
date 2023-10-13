@@ -19,15 +19,13 @@ draft: false
 
 在图形领域，用于保存周围环境信息的环境贴图有多种形式，最常见的是 CubeMap 和 EquirectangularMap。
 
-#### CubeMap
-
 CubeMap (立方体贴图) 是一种由六个独立的正方形纹理组成的集合，它将多个纹理组合起来映射到一个单一纹理。
 
 ![](/cubemaps_skybox.png)
 
-#### EquirectangularMap
-
 EquirectangularMap （等距柱状投影）。
+
+![](/equirectangular-map.jpg)
 
 ## ThreeJS 中使用环境贴图
 
@@ -58,7 +56,7 @@ sphere.material.envMap = environmentMap;
 
 使用 CubeMap 时必须严格按照顺序加载贴图，否则画面会失真。
 
-#### EquirectangularMap
+### EquirectangularMap
 
 加载 EquirectangularMap 需要根据不同的文件类型选择不同的加载器。
 
@@ -69,6 +67,10 @@ sphere.material.envMap = environmentMap;
 * jpg: TextureLoader
 
 ```javascript
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+const rgbeLoader = new RGBELoader();
+
 rgbeLoader.load('/textures/environmentMaps/2h.hdr', (environmentMap) => {
   environmentMap.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = environmentMap;
