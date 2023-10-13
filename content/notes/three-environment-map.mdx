@@ -34,6 +34,7 @@ EquirectangularMap （等距柱状投影）。
 ```javascript
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 
+// 贴图方向加载顺序：正x、负x，正y、负y、正z、负z
 const environmentMap = cubeTextureLoader.load([
   '/textures/environmentMaps/px.png',
   '/textures/environmentMaps/nx.png',
