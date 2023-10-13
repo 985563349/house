@@ -59,8 +59,16 @@ scene.environment = environmentMap;
 
 加载 EquirectangularMap 需要根据不同的文件类型选择不同的加载器。
 
-以下是不同文件类型对应的加载方法：
+以下是不同文件类型对应的加载器：
 
 * hdr: RGBELoader
 * exr: EXRLoader
 * jpg: TextureLoader
+
+```javascript
+rgbeLoader.load('/textures/environmentMaps/2h.hdr', (environmentMap) => {
+  environmentMap.mapping = THREE.EquirectangularReflectionMapping;
+  scene.background = environmentMap;
+  scene.environment = environmentMap;
+})
+```
