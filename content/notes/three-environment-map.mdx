@@ -5,15 +5,15 @@ date: 2023-10-12T16:00:00.000Z
 draft: false
 ---
 
-在3D引擎中用于照亮物体的光源非常丰富。其中，比较常用的有：平行方向光、点光源、聚光灯以及体积光等。但它们都是对真实光源的近似，并不能很好地模拟真实世界中复杂的光照情况。为了增加光照效果的真实感，通常会使用一种基于图像的光照计算算法（Image-based Lighting）。
+在 3D 引擎中用于照亮物体的光源非常丰富。其中，比较常用的有：平行方向光、点光源、聚光灯以及体积光等。但它们都是对真实光源的近似，并不能很好地模拟真实世界中复杂的光照情况。为了增加光照效果的真实感，通常会使用一种基于图像的光照计算算法（Image-based Lighting）。
 
 ## IBL（基于图像的光照）
 
-在真实世界里，一个物体，不会单独存在于一个空空的环境中，它的周围一定有其他的物体。当光源照射到其他物体上的时候，一定会产生反射，其中就会有很多反射的光线会反射到该物体上。3D世界中，如果一个物体能接收来自周围环境的光照，所呈现出来的效果就会更加真实。
+在真实世界里，一个物体，不会单独存在于一个空空的环境中，它的周围一定有其他的物体。当光源照射到其他物体上的时候，一定会产生反射，其中就会有很多反射的光线会反射到该物体上。3D 世界中，如果一个物体能接收来自周围环境的光照，所呈现出来的效果就会更加真实。
 
-基于图像的光照就是将物体周围的光照信息存储在图片（即环境贴图）中，3D引擎能够加载并识别这些信息，从而模拟出非常真实的光照效果。
+基于图像的光照就是将物体周围的光照信息存储在图片（即环境贴图）中，3D 引擎能够加载并识别这些信息，从而模拟出非常真实的光照效果。
 
-图像光照通常会和物理材质一起使用，非物理材质在底层实现上无法接收来自周围环境的光照。
+图像光照通常会和物理材质一起使用，以获得更好的光照效果。
 
 ### 环境贴图
 
@@ -29,9 +29,9 @@ EquirectangularMap （等距柱状投影）。
 
 ## ThreeJS 中使用环境贴图
 
-ThreeJS 中使用环境贴图首先需要选择适合的加载器加载贴图，然后将场景的 **background** 属性设置为贴图实例，最后把需要接收光照的物体的材质属性 **envMap** 设置为贴图实例。
+ThreeJS 中使用环境贴图首先需要选择适合的加载器加载贴图，然后将场景背景和接收光照的物体的材质属性设置为贴图实例。
 
-> TIP: 通过将场景的 **environment** 属性设置为环境贴图实例，能快速为场景内所有物理材质添加环境贴图。
+> TIP: 通过设置场景的 **environment** 属性能快速为场景内所有物理材质添加环境贴图。
 
 ### CubeMap
 
@@ -48,7 +48,7 @@ const environmentMap = cubeTextureLoader.load([
   '/textures/environmentMaps/ny.png',
   '/textures/environmentMaps/pz.png',
   '/textures/environmentMaps/nz.png',
-])
+]);
 
 scene.background = environmentMap;
 sphere.material.envMap = environmentMap;
@@ -62,9 +62,9 @@ sphere.material.envMap = environmentMap;
 
 以下是不同文件类型对应的加载器：
 
-* hdr: RGBELoader
-* exr: EXRLoader
-* jpg: TextureLoader
+- hdr: RGBELoader
+- exr: EXRLoader
+- jpg: TextureLoader
 
 ```javascript
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
@@ -75,7 +75,11 @@ rgbeLoader.load('/textures/environmentMaps/2h.hdr', (environmentMap) => {
   environmentMap.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = environmentMap;
   scene.environment = environmentMap;
-})
+});
 ```
 
 EquirectangularMap 加载后成功后，需要将 **mapping** 属性设置为：**THREE.EquirectangularReflectionMapping**，目的是告诉 ThreeJS 的渲染器目前使用的是等距柱状投影。如果不进行设置，画面会失真。
+
+## 效果展示
+
+{% codesandbox url="https://codesandbox.io/embed/three-environment-map-d4ld32?codemirror=1&hidedevtools=1&hidenavigation=1&fontsize=14&theme=dark" %}
