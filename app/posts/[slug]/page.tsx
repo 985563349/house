@@ -7,6 +7,7 @@ import client from '@/tina/__generated__/client';
 import { StackBlitzEmbed } from '@/components/stack-blitz-embed';
 import { GitHubGistEmbed } from '@/components/github-gist-embed';
 import { CodeBlock } from '@/components/code-block';
+import { CodeSandboxEmbed } from '@/components/code-sandbox-embed';
 
 type Props = {
   params: { slug: string };
@@ -51,6 +52,7 @@ export default async function Post({ params }: Props) {
       <TinaMarkdown
         content={data.post.body}
         components={{
+          CodeSandboxEmbed,
           StackBlitzEmbed,
           GitHubGistEmbed,
           code_block: CodeBlock,

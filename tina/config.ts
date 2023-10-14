@@ -83,6 +83,23 @@ export default defineConfig({
             isBody: true,
             templates: [
               {
+                name: 'CodeSandboxEmbed',
+                label: 'CodeSandbox Embed',
+                match: {
+                  start: '{%',
+                  end: '%}',
+                  name: 'codesandbox',
+                },
+                fields: [
+                  {
+                    name: 'url',
+                    label: 'url',
+                    type: 'string',
+                    required: true,
+                  },
+                ],
+              },
+              {
                 name: 'StackBlitzEmbed',
                 label: 'StackBlitz Embed',
                 match: {
@@ -165,6 +182,23 @@ export default defineConfig({
             label: 'Body',
             isBody: true,
             templates: [
+              {
+                name: 'CodeSandboxEmbed',
+                label: 'CodeSandbox Embed',
+                match: {
+                  start: '{%',
+                  end: '%}',
+                  name: 'codesandbox',
+                },
+                fields: [
+                  {
+                    name: 'url',
+                    label: 'url',
+                    type: 'string',
+                    required: true,
+                  },
+                ],
+              },
               {
                 name: 'StackBlitzEmbed',
                 label: 'StackBlitz Embed',
