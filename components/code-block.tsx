@@ -1,7 +1,4 @@
-'use client';
-
-import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Code } from 'bright';
 
 export type CodeBlockProps = {
   lang?: string;
@@ -9,11 +6,7 @@ export type CodeBlockProps = {
 };
 
 const CodeBlock = (props?: CodeBlockProps) => {
-  return (
-    <SyntaxHighlighter language={props?.lang} style={oneDark}>
-      {props?.value ?? ''}
-    </SyntaxHighlighter>
-  );
+  return <Code lang={props?.lang}>{props?.value ?? ''}</Code>;
 };
 
 export { CodeBlock };

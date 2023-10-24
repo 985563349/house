@@ -1,13 +1,8 @@
 import { unstable_cache } from 'next/cache';
-import { TinaMarkdown } from 'tinacms/dist/rich-text';
 import { format } from 'date-fns';
 
 import client from '@/tina/__generated__/client';
-
-import { StackBlitzEmbed } from '@/components/stack-blitz-embed';
-import { GitHubGistEmbed } from '@/components/github-gist-embed';
-import { CodeBlock } from '@/components/code-block';
-import { CodeSandboxEmbed } from '@/components/code-sandbox-embed';
+import { Markdown } from '@/components/markdown';
 
 type Props = {
   params: { slug: string };
@@ -49,15 +44,7 @@ export default async function Note({ params }: Props) {
         {format(new Date(data.note.date), 'yyyy-MM-dd')}
       </time>
 
-      <TinaMarkdown
-        content={data.note.body}
-        components={{
-          CodeSandboxEmbed,
-          StackBlitzEmbed,
-          GitHubGistEmbed,
-          code_block: CodeBlock,
-        }}
-      />
+      <Markdown content={data.note.body} />
     </article>
   );
 }
