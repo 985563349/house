@@ -1,4 +1,3 @@
-import { unstable_cache } from 'next/cache';
 import { format } from 'date-fns';
 
 import client from '@/tina/__generated__/client';
@@ -28,14 +27,10 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function Note({ params }: Props) {
-  const cacheKey = `note-${params.slug}`;
+export const revalidate = 3600;
 
-  const { data } = await unstable_cache(
-    () => client.queries.note({ relativePath: `${params.slug}.mdx` }),
-    [cacheKey],
-    { tags: [cacheKey] }
-  )();
+export default async function Note({ params }: Props) {
+  const { data } = await client.queries.note({ relativePath: `${params.slug}.mdx` });
 
   return (
     <article className="prose dark:prose-invert prose-p:text-lg">
