@@ -1,7 +1,7 @@
 const Footer: React.FC = () => {
   return (
-    <footer className="flex justify-center">
-      <div className="flex items-center px-6 w-full h-20 max-w-[1024px]">
+    <footer className="flex w-full h-auto items-center justify-center">
+      <div className="flex items-center px-6 w-full h-[5.5rem]">
         <p className="text-sm opacity-50">
           <a
             href="https://creativecommons.org/licenses/by-nc-sa/4.0/"

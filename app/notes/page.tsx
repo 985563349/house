@@ -35,9 +35,9 @@ export default async function Notes() {
                 </Link>
               </div>
 
-              <div>
-                <time className="text-sm text-text-muted" dateTime={note?.node?.date}>
-                  {format(new Date(note?.node?.date!), 'MM-dd')}
+              <div className="pt-1 italic text-sm text-text-muted">
+                <time dateTime={note?.node?.date}>
+                  {format(new Date(note?.node?.date!), 'MMM dd, yyyy')}
                 </time>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 
-import client from '@/tina/__generated__/client';
 import { Markdown } from '@/components/markdown';
+import client from '@/tina/__generated__/client';
 
 type Props = {
   params: { slug: string };
@@ -33,10 +33,11 @@ export default async function Note({ params }: Props) {
   const { data } = await client.queries.note({ relativePath: `${params.slug}.mdx` });
 
   return (
-    <article className="prose dark:prose-invert prose-p:text-lg">
-      <h1 className="mb-3">{data.note.title}</h1>
-      <time className="text-text-muted" dateTime={data.note.date}>
-        {format(new Date(data.note.date), 'yyyy-MM-dd')}
+    <article className="prose max-w-none dark:prose-invert prose-p:text-lg">
+      <h1 className="mb-5">{data.note.title}</h1>
+
+      <time className="block text-lg text-text-muted" dateTime={data.note.date}>
+        {format(new Date(data.note.date), 'MMM dd, yyyy')}
       </time>
 
       <Markdown content={data.note.body} />

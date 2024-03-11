@@ -7,18 +7,16 @@ export default async function Home() {
   const { data } = await client.queries.page({ relativePath: 'home.mdx' });
 
   return (
-    <div>
-      <section>
-        <h1 className="my-10 font-extrabold text-6xl text-center">{data.page.title}</h1>
+    <section>
+      <h1 className="my-10 font-extrabold text-6xl text-center">{data.page.title}</h1>
 
-        <TinaMarkdown
-          content={data.page.body}
-          components={{
-            p: (props) => <p className="mb-10" {...props} />,
-            ul: (props) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />,
-          }}
-        />
-      </section>
-    </div>
+      <TinaMarkdown
+        content={data.page.body}
+        components={{
+          p: (props) => <p className="mb-10" {...props} />,
+          ul: (props) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />,
+        }}
+      />
+    </section>
   );
 }

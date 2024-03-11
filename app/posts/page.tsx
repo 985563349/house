@@ -35,9 +35,9 @@ export default async function Posts() {
                 </Link>
               </div>
 
-              <div>
-                <time className="text-sm text-text-muted" dateTime={post?.node?.date}>
-                  {format(new Date(post?.node?.date!), 'MM-dd')}
+              <div className="pt-1 italic text-sm text-text-muted">
+                <time dateTime={post?.node?.date}>
+                  {format(new Date(post?.node?.date!), 'MMM dd, yyyy')}
                 </time>
               </div>
             </div>

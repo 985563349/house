@@ -30,6 +30,7 @@ const CustomNavbar: React.FC = () => {
 
   return (
     <Navbar
+      maxWidth="full"
       height="5.5rem"
       shouldHideOnScroll
       disableAnimation
