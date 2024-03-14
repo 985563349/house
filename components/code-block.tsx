@@ -6,7 +6,7 @@ export type CodeBlockProps = {
 };
 
 const CodeBlock = (props?: CodeBlockProps) => {
-  return <Code lang={props?.lang}>{props?.value ?? ''}</Code>;
+  return <Code lang={props?.lang}>{props?.value}</Code>;
 };
 
 export { CodeBlock };

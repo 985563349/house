@@ -22,8 +22,8 @@ export default async function Notes() {
       <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
         {data.noteConnection.edges?.map((note) => (
           <li key={note?.node?.id}>
-            <div className="grid grid-cols-[1fr] md:grid-cols-[1fr_auto] sm:gap-2">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:gap-2">
+              <div className="flex-1">
                 <Link
                   href={`/notes/${note?.node?._sys.breadcrumbs.join('/')}`}
                   className="transition-[background-size] duration-300 
