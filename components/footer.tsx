@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
             <a
               href="https://creativecommons.org/licenses/by-nc-sa/4.0"
               target="_blank"
-              className="mr-1 underline hover:text-black"
+              className="mr-1 underline"
             >
               CC BY-NC-SA 4.0
             </a>
@@ -15,11 +15,7 @@ const Footer: React.FC = () => {
           </p>
 
           <p className="text-sm opacity-50">
-            <a
-              href="https://beian.miit.gov.cn"
-              target="_blank"
-              className="mr-1 underline hover:text-black"
-            >
+            <a href="https://beian.miit.gov.cn" target="_blank" className="mr-1 underline">
               鄂ICP备2024041293号-1
             </a>
           </p>
