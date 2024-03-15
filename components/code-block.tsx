@@ -14,7 +14,9 @@ const highlight: Extension = {
   name: 'highlight',
   MultilineAnnotation: ({ children }) => {
     return (
-      <span className="block border-l-4 border-blue-500 bg-white bg-opacity-5">{children}</span>
+      <span className="block border-l-2 border-blue-500 bg-black bg-opacity-5 dark:bg-opacity-50">
+        {children}
+      </span>
     );
   },
 };
@@ -27,9 +29,14 @@ export type CodeBlockProps = {
 const CodeBlock = (props?: CodeBlockProps) => {
   return (
     <Code
+      className="border dark:border-none"
       style={{ borderRadius: '0.375rem' }}
       lang={props?.lang}
-      theme="material-palenight"
+      theme={{
+        dark: 'material-palenight',
+        light: 'material-lighter',
+        lightSelector: 'html.light',
+      }}
       extensions={[title, highlight]}
     >
       {props?.value}

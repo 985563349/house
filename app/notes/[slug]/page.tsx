@@ -33,10 +33,10 @@ export default async function Note({ params }: Props) {
   const { data } = await client.queries.note({ relativePath: `${params.slug}.mdx` });
 
   return (
-    <article className="prose max-w-none dark:prose-invert prose-p:text-lg prose-pre:rounded-none">
+    <article className="prose dark:prose-invert prose-pre:rounded-none">
       <h1 className="mb-5">{data.note.title}</h1>
 
-      <time className="block text-lg text-text-muted" dateTime={data.note.date}>
+      <time className="block text-text-muted" dateTime={data.note.date}>
         {format(new Date(data.note.date), 'MMM dd, yyyy')}
       </time>
 
