@@ -2,17 +2,16 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { cn } from '@nextui-org/react';
 import {
+  cn,
+  Link,
   Navbar,
   NavbarContent,
   NavbarItem,
   NavbarMenuToggle,
   NavbarMenu,
   NavbarMenuItem,
-} from '@nextui-org/navbar';
-import { Button } from '@nextui-org/button';
+} from '@nextui-org/react';
 import { RiGithubFill } from 'react-icons/ri';
 
 import { ThemeToggle } from './theme-toggle';
@@ -32,16 +31,19 @@ const CustomNavbar: React.FC = () => {
     <Navbar
       maxWidth="full"
       height="5.5rem"
-      shouldHideOnScroll
       disableAnimation
+      shouldHideOnScroll
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
     >
-      <NavbarContent className="sm:hidden">
-        <NavbarMenuToggle aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} />
+      <NavbarContent className="sm:hidden" justify="start">
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          className="outline-none"
+        />
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex">
+      <NavbarContent className="hidden sm:flex" justify="center">
         {menuItems.map((item) => {
           const isActive =
             item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
@@ -49,8 +51,11 @@ const CustomNavbar: React.FC = () => {
           return (
             <NavbarItem key={item.name}>
               <Link
+                className={cn('animated-link hover:opacity-100 active:opacity-100', {
+                  active: isActive,
+                })}
                 href={item.href}
-                className={cn('animated-link', 'text-lg', { active: isActive })}
+                size="lg"
               >
                 {item.name}
               </Link>
@@ -59,12 +64,10 @@ const CustomNavbar: React.FC = () => {
         })}
       </NavbarContent>
 
-      <NavbarContent className="gap-2" justify="end">
+      <NavbarContent justify="end">
         <NavbarItem>
-          <Link href="https://github.com/985563349" target="_blank" className="block">
-            <Button variant="light" isIconOnly>
-              <RiGithubFill className="w-6 h-6 text-foreground" />
-            </Button>
+          <Link className="block" href="https://github.com/985563349" isExternal>
+            <RiGithubFill className="w-6 h-6 text-foreground" />
           </Link>
         </NavbarItem>
 
@@ -81,8 +84,11 @@ const CustomNavbar: React.FC = () => {
           return (
             <NavbarMenuItem key={item.name}>
               <Link
+                className={cn('animated-link hover:opacity-100 active:opacity-100', {
+                  active: isActive,
+                })}
                 href={item.href}
-                className={cn('animated-link', 'text-lg', { active: isActive })}
+                size="lg"
               >
                 {item.name}
               </Link>
