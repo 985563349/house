@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
   cn,
-  Link,
+  Button,
   Navbar,
   NavbarContent,
   NavbarItem,
@@ -31,7 +32,6 @@ const CustomNavbar: React.FC = () => {
     <Navbar
       maxWidth="full"
       height="5.5rem"
-      disableAnimation
       shouldHideOnScroll
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
@@ -43,20 +43,14 @@ const CustomNavbar: React.FC = () => {
         />
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex" justify="center">
+      <NavbarContent className="hidden sm:flex gap-4" justify="center">
         {menuItems.map((item) => {
           const isActive =
             item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
 
           return (
             <NavbarItem key={item.name}>
-              <Link
-                className={cn('animated-link hover:opacity-100 active:opacity-100', {
-                  active: isActive,
-                })}
-                href={item.href}
-                size="lg"
-              >
+              <Link className={cn('animated-link text-lg', { active: isActive })} href={item.href}>
                 {item.name}
               </Link>
             </NavbarItem>
@@ -66,9 +60,15 @@ const CustomNavbar: React.FC = () => {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Link className="block" href="https://github.com/985563349" isExternal>
+          <Button
+            href="https://github.com/985563349"
+            target="_blank"
+            as={Link}
+            variant="light"
+            isIconOnly
+          >
             <RiGithubFill className="w-6 h-6 text-foreground" />
-          </Link>
+          </Button>
         </NavbarItem>
 
         <NavbarItem>
@@ -76,20 +76,14 @@ const CustomNavbar: React.FC = () => {
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarMenu>
+      <NavbarMenu className="overflow-y-hidden">
         {menuItems.map((item) => {
           const isActive =
             item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
 
           return (
-            <NavbarMenuItem key={item.name}>
-              <Link
-                className={cn('animated-link hover:opacity-100 active:opacity-100', {
-                  active: isActive,
-                })}
-                href={item.href}
-                size="lg"
-              >
+            <NavbarMenuItem key={item.name} onClick={() => setIsMenuOpen(false)}>
+              <Link className={cn('animated-link text-lg', { active: isActive })} href={item.href}>
                 {item.name}
               </Link>
             </NavbarMenuItem>
