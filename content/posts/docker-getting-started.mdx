@@ -1,11 +1,15 @@
 ---
-title: Docker入门教程 - 介绍与入门
+title: 【译】Docker入门教程 - 介绍与入门
 topic: content/topics/docker.mdx
 date: 2024-03-14T16:00:00.000Z
 draft: false
 ---
 
-![docker](/docker_logo.png 'docker')
+原文地址：[Docker Tutorial for Beginners – Introduction & Getting Started](https://spacelift.io/blog/docker-tutorial#docker-basics)
+
+作者：[James Walker](https://spacelift.io/blog/author/jamesw)
+
+![docker](/docker_logo.png "docker")
 
 [Docker](https://www.docker.com) 是一个用于构建和运行容器的平台。容器是将源代码及其依赖关系打包到隔离环境中的软件单元。它们通常是短暂的，当容器停止时，容器文件系统中的内容就会被处理掉，但你也可以使用 [volume（卷）](https://spacelift.io/blog/docker-volumes) 等功能持久地存储数据。
 
@@ -24,7 +28,7 @@ draft: false
 
 如果你使用的是 Windows 或 Mac，Desktop 是安装 Docker 的最简单方法。前往文档的[安装页面](https://docs.docker.com/engine/install/#desktop)，为你的系统下载正确的软件包。运行安装程序，然后从应用程序菜单启动 Docker Desktop。现在，你已经准备好在终端运行 Docker 命令了。
 
-要在 Linux 上安装 Docker Engine，你可以下载预编译的[静态二进制文件](https://docs.docker.com/engine/install/binaries/)，或者按照[文档](https://docs.docker.com/engine/install/#server)中的步骤从发行版的软件包管理器中进行安装。
+要在 Linux 上安装 Docker Engine，你可以下载预编译的[静态二进制文件](https://docs.docker.com/engine/install/binaries)，或者按照[文档](https://docs.docker.com/engine/install/#server)中的步骤从发行版的软件包管理器中进行安装。
 
 ### 在 Ubuntu 上安装 Docker Engine
 
@@ -48,7 +52,7 @@ echo \
 sudo apt-get update
 ```
 
-> Note：如果你使用的是 Ubuntu 的衍生发行版，如 Linux Mint，你可能需要使用 UBUNTU_CODENAME 而不是 VERSION_CODENAME。
+> Note：如果你使用的是 Ubuntu 的衍生发行版，如 Linux Mint，你可能需要使用 UBUNTU\_CODENAME 而不是 VERSION\_CODENAME。
 
 安装 Docker 软件包：
 
@@ -58,11 +62,11 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 
 它们的作用如下：
 
-- docker-ce：管理容器的 Docker 守护进程。
-- docker-ce-cli：用于与守护进程交互的 CLI。
-- containerd.io：[Containerd](https://containerd.io) 是一个容器运行时，它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，以便根据 Docker 守护进程的请求启动和运行容器。
-- docker-buildx-plugin：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展构建功能的 CLI 插件。
-- docker-compose-plugin：用于定义和运行多容器应用程序的插件。
+* docker-ce：管理容器的 Docker 守护进程。
+* docker-ce-cli：用于与守护进程交互的 CLI。
+* containerd.io：[Containerd](https://containerd.io) 是一个容器运行时，它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，以便根据 Docker 守护进程的请求启动和运行容器。
+* docker-buildx-plugin：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展构建功能的 CLI 插件。
+* docker-compose-plugin：用于定义和运行多容器应用程序的插件。
 
 #### 检查 Docker 是否正常工作
 
@@ -101,8 +105,8 @@ To generate this message, Docker took the following steps:
 
 在开始正确使用 Docker 之前，了解你会遇到的两个主要概念非常重要：
 
-- image（镜像）：所有容器都是从镜像启动的。镜像定义了容器文件系统的初始状态。它类似于传统虚拟机的安装介质。在 [Docker Hub](https://hub.docker.com) 等公共存储库中有预构建的镜像，其中包括常用[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)的选项。
-- container（容器）：容器是镜像的一个实例。它是一个独立于其他容器和主机上现有进程的运行进程。你可以同时启动多个相同镜像的容器。容器在镜像之上有一个可写文件系统层，允许进行修改。
+* image（镜像）：所有容器都是从镜像启动的。镜像定义了容器文件系统的初始状态。它类似于传统虚拟机的安装介质。在 [Docker Hub](https://hub.docker.com) 等公共存储库中有预构建的镜像，其中包括常用[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)的选项。
+* container（容器）：容器是镜像的一个实例。它是一个独立于其他容器和主机上现有进程的运行进程。你可以同时启动多个相同镜像的容器。容器在镜像之上有一个可写文件系统层，允许进行修改。
 
 现在，你可以开始自信地使用容器（运行进程）和镜像（你启动容器的可重用模板）了。
 
@@ -166,9 +170,9 @@ Successfully built 80890ed154fa
 Successfully tagged demo-image:latest
 ```
 
-该命令指示 Docker 在工作目录（由 **.** 参数指示）中构建 Dockerfile，并将输出标记为 demo-image:latest。接下来会发生以下步骤：
+该命令指示 Docker 在工作目录（由 **.** 参数指示）中构建 Dockerfile，并将输出标记为 demo-image\:latest。接下来会发生以下步骤：
 
-1. FORM 语句指示 Docker 使用 node:latest 镜像作为新镜像的基础。之后的指令将应用于 node:latest 镜像的文件系统之上。
+1. FORM 语句指示 Docker 使用 node\:latest 镜像作为新镜像的基础。之后的指令将应用于 node\:latest 镜像的文件系统之上。
 2. COPY 语句会将应用程序的源代码从工作目录复制到容器中。
 3. 该镜像已配置为在容器启动时运行 node，并将应用程序的代码作为其参数。
 
@@ -190,7 +194,7 @@ docker run demo-image:latest
 docker login
 ```
 
-接下来，你必须为你的镜像添加特殊标签，以便它能引用你的 Docker Hub 用户名。以下命令会在现有镜像中添加另一个标签，将 **\<DOCKER_HUB_USERNAME\>** 替换为真实的 Docker Hub 用户名：
+接下来，你必须为你的镜像添加特殊标签，以便它能引用你的 Docker Hub 用户名。以下命令会在现有镜像中添加另一个标签，将 **\<DOCKER\_HUB\_USERNAME>** 替换为真实的 Docker Hub 用户名：
 
 ```bash
 docker tag demo-image:latest <DOCKER_HUB_USERNAME>/demo-image:latest
@@ -299,7 +303,7 @@ docker rmi hello-world:latest
 
 ### 端口映射
 
-端口映射允许你使用主机的网络接口访问运行在容器中的应用程序。在上面的一些示例中，使用 nginx:latest 镜像启动了运行 Nginx Web 服务器的容器。由于没有映射端口，因此无法从 Docker 主机外部访问 Nginx。
+端口映射允许你使用主机的网络接口访问运行在容器中的应用程序。在上面的一些示例中，使用 nginx\:latest 镜像启动了运行 Nginx Web 服务器的容器。由于没有映射端口，因此无法从 Docker 主机外部访问 Nginx。
 
 要映射端口，请在启动容器时添加 **-p** 标志：
 
@@ -374,7 +378,7 @@ docker logs nginx --follow
 docker exec <CONTAINER> <COMMAND>
 ```
 
-将容器 ID 或名称作为 **\<CONTAINER\>**，然后将命令及参数作为 **\<COMMAND\>**。如果使用 shell 的名称作为命令，就会在容器内获得一个交互式终端会话。要实现这一点，你还必须向 **docker exec** 传递 **-i** 和 **-t** 标志，以连接终端的标准输入流和设置 TTY。
+将容器 ID 或名称作为 **\<CONTAINER>**，然后将命令及参数作为 **\<COMMAND>**。如果使用 shell 的名称作为命令，就会在容器内获得一个交互式终端会话。要实现这一点，你还必须向 **docker exec** 传递 **-i** 和 **-t** 标志，以连接终端的标准输入流和设置 TTY。
 
 ```bash
 # focus(1)
@@ -389,4 +393,4 @@ root@58661670f1ad:/#
 
 Docker 是最受开发人员欢迎的容器化平台。你可以使用 Docker CLI 运行容器和构建镜像，如果喜欢图形界面，也可以选择 Docker Desktop。Docker 创建的镜像也可用于任何其他兼容 OCI 的容器环境，如 [Podman](https://podman.io) 或 [Kubernetes](https://kubernetes.io)。
 
-原文地址：https://spacelift.io/blog/docker-tutorial#docker-basics
+感谢 James Walker。

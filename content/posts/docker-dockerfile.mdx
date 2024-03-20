@@ -1,0 +1,306 @@
+---
+title: 【译】Docker入门教程 - 如何编写 Dockerfile 构建镜像
+topic: content/topics/docker.mdx
+date: 2024-03-19T16:00:00.000Z
+draft: false
+---
+
+原文地址：[What Is a Dockerfile And How To Build It – Best Practices](https://spacelift.io/blog/dockerfile)
+
+作者：[James Walker](https://spacelift.io/blog/author/jamesw)
+
+![docker](/docker_logo.png 'docker')
+
+Docker 是一个用于构建和运行容器化应用程序的平台。容器将源代码、依赖项和运行环境打包成可重复使用的单元，可以部署到任何有容器运行环境的地方。这可能是你笔记本电脑上的 Docker 安装，也可能是提供生产基础设施的 [Kubernetes 集群](https://spacelift.io/blog/kubernetes-tutorial)。
+
+无论在哪里启动容器，都需要容器镜像才能运行。镜像定义了容器文件系统的初始状态。它们是通过 [Dockerfile](https://docs.docker.com/reference/dockerfile) 创建的，Docker 会处理一系列指令来组装镜像。
+
+在本文中，我们将介绍什么是 Dockerfile、如何创建 Dockerfile 以及应该遵循的一些最佳实践。
+
+## 什么是 Dockerfile ？
+
+Dockerfile 是文本文件，其中列出了 Docker 守护进程在构建容器镜像时需要遵循的指令。当你执行 [**docker build** 命令](https://docs.docker.com/reference/cli/docker/image/build)时，Dockerfile 中的行会按顺序被处理，以组装你的的镜像。
+
+Dockerfile 的基本语法如下：
+
+```bash
+# Comment
+INSTRUCTION arguments
+```
+
+指令是对镜像执行特定操作的关键字，例如，从工作目录复制文件或在镜像中执行命令。
+
+按照惯例，指令通常是以大写字母书写。这不是 Dockerfile 解析器的[要求](https://docs.docker.com/reference/dockerfile)，但它能让我们更容易看到哪一行包含了新指令。你可以使用反斜线操作符将参数分散到多行中：
+
+```bash
+RUN apt-get install \
+curl \
+  wget
+```
+
+以 **#** 字符开头的行被解析为注释。它们将被解析器忽略，因此你可以用它们来记录你的 Dockerfile。
+
+## Dockerfile 常用指令
+
+Docker 支持超过 15 种不同的 Dockerfile 指令，用于向镜像添加内容和设置配置参数。下面是一些最常用的指令。
+
+**FROM**
+
+```bash
+FROM ubuntu:20.04
+```
+
+**FROM** 通常是 Dockerfile 中的第一行。它指的是一个现有的镜像，它将成为你构建的基础。后续所有指令都将应用于所引用镜像的文件系统之上。
+
+**COPY**
+
+```bash
+COPY main.js /app/main.js
+```
+
+**COPY** 将文件或目录添加到镜像的文件系统中。它在 Docker 主机和正在制作中的镜像之间复制。使用该镜像的容器将包含你复制进来的所有文件。
+
+指令的第一个参数引用主机上的源路径。第二个参数设置镜像中的目标路径。也可以使用 **--from** 标志直接从另一个 Docker 镜像复制：
+
+```bash
+# Copies the path /usr/bin/composer from the composer:2 image
+COPY --from=composer:2 /usr/bin/composer composer
+```
+
+**ADD**
+
+```bash
+ADD http://example.com/archive.tar /archive-content
+```
+
+**ADD** 的工作原理与 **COPY** 类似，但还支持远程文件 URL 和自动提取存档。存档将被提取到容器中的目标路径。支持 gzip、bzip2 和 xz 格式的解压缩。
+
+虽然 **ADD** 可以简化某些镜像构建任务，但我们[不鼓励使用](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#add-or-copy)它，因为它的行为会掩盖重要细节。意外使用 **ADD** 而不是 **COPY** 会造成混乱，因为存档文件会被提取到容器中，而不是原样复制。
+
+**RUN**
+
+```bash
+RUN apt-get update && apt-get install -y nodejs
+```
+
+**RUN** 在正在构建的镜像中运行一条命令。它会在之前的镜像层上创建一个新的[镜像层](https://docs.docker.com/storage/storagedriver/#images-and-layers)。该层将包含命令所应用的文件系统更改。**RUN** 指令最常用于安装和配置镜像所需的软件包。
+
+**ENV**
+
+```bash
+ENV PATH=$PATH:/app/bin
+```
+
+**ENV** 指令用于设置容器中可用的环境变量。它的参数类似于 shell 中的变量赋值：指定变量名和要赋的值，并用等号分隔。
+
+## 编写 Dockerfile 和构建镜像
+
+准备好为你的应用程序创建 Docker 镜像了吗？下面介绍如何从一个简单的 Dockerfile 开始。
+
+首先，为你的项目创建一个新目录。复制以下代码并将其保存为 main.js：
+
+```javascript
+// title main.js
+const { v4: uuid } = require('uuid');
+
+console.log('Hello World');
+console.log(`Your ID is ${uuid()}`);
+```
+
+使用 npm 将 uuid 软件包添加到项目中：
+
+```bash
+npm install uuid
+```
+
+接下来，复制以下 Docker 指令，然后将其保存到工作目录下的 Dockerfile 中：
+
+```dockerfile
+# title Dockerfile
+FROM node:16
+WORKDIR /app
+
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
+COPY main.js .
+
+ENTRYPOINT ["node"]
+CMD ["main.js"]
+```
+
+让我们逐行解析这个 Dockerfile：
+
+- **FROM node:16**：选择 [Node.js 官方镜像](https://hub.docker.com/_/node)作为基础镜像。所有其他语句都在 node:16 的基础上应用。
+- **WORKDIR /app**：工作目录更改为 /app。随后使用相对路径的语句，如，紧接着的 **COPY** 指令，将被解析为容器内的 /app。
+- **COPY package.json**：接下来的两行将从主机工作目录复制 package.json 和 package-lock.json 文件。目标路径是 **.** ，这意味着它们将以原名存放在容器的的工作目录中。
+- **RUN npm install**：该指令在容器的文件系统中执行 npm install ，获取项目的依赖。
+- **COPY main.js**：应用程序的源代码将被添加到容器中。这发生在 **RUN** 指令之后，因为你的代码通常会比依赖关系更频繁地变化。这样的操作顺序可以更有效地利用 Docker 的[构建缓存](https://docs.docker.com/build/cache)。
+- **ENTRYPOINT \["node"]**：设置镜像的[入口点](https://docs.docker.com/reference/dockerfile/#entrypoint)，以便在使用镜像创建新容器时自动启动 node。
+- **CMD \["main.js"]**：该指令为镜像的入口点提供参数。在本例中，它将使用 node 运行你的应用程序代码。
+
+### 构建镜像
+
+现在，你可以使用 **docker build** 从 Dockerfile 中构建镜像了。在终端运行以下命令：
+
+```bash
+docker build -t demo-image:latest .
+```
+
+等待 Docker 构建镜像。一系列指令将显示在你的终端上。
+
+**docker build** 命令以构建上下文的路径为参数。构建上下文定义了哪些路径可以在 Dockerfile 中引用，Dockerfile 指令（如 **COPY** ）将看不到构建上下文之外的路径。最常见的做的是将构建上下文设置为 **.** 。
+
+Docker 会自动在工作目录的 Dockerfile 中查找指令，但你也可以使用 **-f** 标志引用不同的 Dockerfile：
+
+```bash
+docker build -f dockerfiles/app.dockerfile -t demot-image:latest .
+```
+
+**-t** 标志用于设置构建完成后分配给镜像的标签。如果需要添加多个标签，可以重复使用该标志。
+
+### 使用镜像
+
+创建好镜像后，启动一个容器来查看代码的执行情况：
+
+```bash
+# focus(1)
+docker run demo-image:latest
+
+Hello World!
+Your ID is 606c3a30-e408-4c77-b631-a504559e14a5
+```
+
+根据 Dockerfile 中的指令，镜像文件系统中已经填充了 node 运行时、npm 依赖项和源代码。
+
+## Dockerfile 最佳实践
+
+为应用程序编写 Dockerfile 通常是一项相对简单的任务，但也有一些常见的问题需要注意。以下是一些最佳实践，可以帮助提高镜像的可用性、性能和安全性。
+
+### 不使用 latest 基础镜像
+
+在 **FROM** 指令中使用诸如 **node:latest** 这样的镜像是有风险的，因为它可能会使你面临意想不到的破坏性更改。大多数镜像作者会在新的主要版本发布后立即将 **latest** 切换到新版本，重建镜像可能会悄无声息的选择不同的版本，导致构建失败或者容器软件失灵。
+
+选择特定的标签（如 node:16）更安全，因为它更可预测。只有在别无选择的情况下，才会使用 **latest**。
+
+### 使用可信的基础镜像
+
+选择可信的基础镜像对保护自己免受后门和安全问题的影响也很重要。**FROM** 指令引用的镜像内容包含在你的镜像中。受损的基础镜像可能包含在你的容器中运行的恶意软件。在可能的情况下，尽量选择使用标记为[官方或经过验证的发布者](https://hub.docker.com/search?q=&image_filter=official,store)提交的镜像。
+
+### 使用 HEALTHCHECK 启动容器健康检查
+
+当容器进入故障状态时，健康检查会通知 Docker 和管理员。Docker Swarm 和 Kubernetes 等协调器可以利用这些信息自动重启有问题的容器。
+
+在 Dockerfile 中添加 [**HEALTHCHECK** 指令](https://docs.docker.com/reference/dockerfile/#healthcheck)，为容器启用健康检查。它会设置 Docker 将在容器内运行的命令，以检查容器是否仍然健康：
+
+```dockerfile
+# title Dockerfile
+HEALTHCHECK --timeout=3s \
+  CMD curl -f http://localhost || exit 1
+```
+
+当你运行 **docker ps** 命令列出容器时，它们的健康状况就会显示出来：
+
+```bash
+# focus(1)
+docker ps
+
+CONTAINER ID   IMAGE                	COMMAND              CREATED    	STATUS
+335889ed4698   demo-image:latest      "httpd-foreground"   2 hours ago	Up 2 hours (healthy)
+```
+
+### 正确设置 ENTRYPOINT 和 CMD
+
+**ENTRYPOINT** 和 **CMD** 是[密切相关的指令](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)。**ENTRYPOINT** 设置容器启动时要运行的进程，而 **CMD** 则为该进程提供默认参数。在使用 **docker run** 启动容器时，你可以通过设置自定义参数来轻松覆盖 **CMD**。
+
+上面创建的 Dockerfile 示例中，**ENTRYPOINT ["node"]** 和 **CMD ["main.js"]** 会导致在使用 **docker run demo-image:latest** 启动容器时执行 **node main.js**。
+
+如果运行 **docker run demo-image:latest app.js** 那么 Docker 将调用 **node app.js**。
+
+了解有关 **ENTRYPOINT** 和 **CMD** 之间区别的[更多信息](https://spacelift.io/blog/docker-entrypoint-vs-cmd)。
+
+### 不要在镜像中硬编码密钥
+
+Dockerfile 不应包含任何[硬编码的密钥](https://spacelift.io/blog/docker-secrets)，如密码和 API 密钥。在 Dockerfile 中设置的密钥适用于使用该镜像的所有容器。任何可以访问镜像的人都可以检查你的密钥。
+
+在[单个容器启动时](https://docs.docker.com/reference/cli/docker/container/run/#env)设置环境变量，而不是在 Dockerfile 中提供默认值，这样可以防止意外的安全漏洞。
+
+### 为镜像添加标签，便于更好的组织
+
+拥有许多不同镜像的团队往往很难将它们全部组织起来。你可以使用 **LABEL** 指令在镜像上设置任意元数据。这提供了一种便捷的方式，可以附加项目或应用程序特有的相关信息。按照惯例，标签通常使用反向 DNS 语法设置：
+
+```dockerfile
+# title Dockerfile
+LABEL com.example.project=api
+LABEL com.example.team=backend
+```
+
+容器管理工具通常会显示镜像标签，并允许你筛选不同的值。
+
+### 为镜像设置非 Root 用户
+
+Docker 默认以 root 用户身份运行容器进程。这是有问题的，因为容器中的 root 与主机上的 root 相同。摆脱容器隔离的恶意进程可以在 Docker 主机上运行任意命令。
+
+你可以通过在 Dockerfile 中加入 **USER** 指令来降低这种风险。这将设置容器运行时的用户和组。在所有 Dockerfile 中指定一个非 root 用户是个好习惯：
+
+```dockerfile
+# title Dockerfile
+# set the user
+USER demo-app
+
+# set the user with a UID
+USER 1000
+
+# set the user and group
+USER demo-app:demo-group
+```
+
+### 使用 .dockerignore 避免过长的构建时间
+
+[构建上下文](https://docs.docker.com/build/building/context)是 **docker build** 命令可以访问的路径集。通过 **docker build .** ，通常会使用你的工作目录作为构建上下文来构建镜像，但这会导致包含多余的文件和目录。
+
+为了提高性能，应将 Dockerfile 中不使用的路径，或其他指令在容器内重新创建的路径从构建上下文中移除。这将节省 Docker 在构建过程开始时复制构建上下文的时间。
+
+在工作目录中添加 **.dockerignore** 文件，以排除特定的文件和目录。语法与 [**.gitignore**](https://git-scm.com/docs/gitignore) 类似：
+
+```txt
+# title .dockerignore
+.env
+.local-settings
+node_modules/
+```
+
+### 保持镜像轻量
+
+Docker 镜像可能会变得过大。这不仅会减慢构建速度，在注册表之间移动镜像时还会增加传输成本。
+
+只安装软件运行所需的最小软件包集，尽量减小镜像的大小，此外，尽可能使用轻量的基础镜像，如 [Alpine Linux](https://hub.docker.com/_/alpine) (5MB)，而不是像 Ubuntu (28MB) 这样的大型发行版，也许会有帮助。
+
+### 检查 Dockerfile 并扫描镜像以检查漏洞
+
+Dockerfile 可能会包含破坏构建、导致意外行为或违反最佳实践的错误。在构建之前，使用 [Hadolint](https://github.com/hadolint/hadolint) 等内核检查工具检查 Dockerfile 是否有问题。
+
+Hadolint 可以使用自己的镜像轻松运行：
+
+```bash
+docker run --rm -i hadolint/hadolint < Dockerfile
+```
+
+结果将显示在终端上。
+
+你还可以扫描构建的镜像是否存在漏洞。 [Trivy](https://github.com/aquasecurity/trivy) 等容器扫描程序可以检测镜像文件系统中的过期软件包和已知漏洞。在部署前运行扫描功能有助于防止可被利用的容器进入生产环境。
+
+另请查看 [Docker 安全最佳实践](https://spacelift.io/blog/docker-security)。
+
+## 要点
+
+Docker 是[最流行的](https://www.docker.com/blog/key-insights-from-stack-overflows-2022-developer-survey)开发人员技术之一。它通过将代码和依赖关系打包到容器中来简化现代软件交付任务，这些容器可以在多个环境中发挥相同的功能。
+
+要使用 Docker，首先必须为应用程序编写 Dockerfile。其中包含 Docker 用来创建容器镜像的指令。Dockerfile 可以从本地构建上下文中复制文件，在镜像的文件系统中运行命令，并设置元数据（如，组织不同镜像的标签）。
+
+你编写的 Dockerfile 并不局限于 Docker。Dockerfile 文件名通常按惯例使用，但更通用的替代方案，如 Podman 所青睐的 [Containerfile](https://developers.redhat.com/blog/2019/02/21/podman-and-buildah-for-docker-users)，正在逐渐流起来。Dockerfile 指令由[开放容器倡议（OCI）](https://opencontainers.org)镜像规范定义，生成的镜像可与任何兼容 OCI 的容器运行时配合使用。
+
+将软件打包成容器使其更具有可移植性，可以消除不同环境之间的差异。你可以在笔记本电脑、生产环境以及 CI/CD 基础架构中使用容器。看看 [Soacelift](https://spacelift.io) 是如何使用 Docker 容器运行 CI 作业的。你可以自带 Docker 镜像并将其[用作运行程序](https://docs.spacelift.io/integrations/docker)，以加快利用第三方工具的部署速度。Spacelift 的官方镜像可以在[此处](https://github.com/spacelift-io/runner-terraform)找到。
+
+感谢 James Walker。
