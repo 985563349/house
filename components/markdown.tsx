@@ -16,6 +16,11 @@ const Markdown: React.FC<MarkdownProps> = ({ components, ...props }) => {
         StackBlitzEmbed,
         GitHubGistEmbed,
         code_block: CodeBlock,
+        a: (props) => (
+          <a href={props?.url} target="_blank">
+            {props?.children}
+          </a>
+        ),
         ...components,
       }}
     />

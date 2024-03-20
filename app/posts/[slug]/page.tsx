@@ -33,7 +33,7 @@ export default async function Post({ params }: Props) {
   const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
 
   return (
-    <article className="prose dark:prose-invert prose-pre:rounded-none">
+    <article className="prose dark:prose-invert prose-pre:rounded-none prose-a:underline-offset-4 prose-a:decoration-text-link hover:prose-a:text-text-link">
       <h1 className="mb-5">{data.post.title}</h1>
 
       <time className="block text-text-muted" dateTime={data.post.date}>
