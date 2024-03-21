@@ -9,7 +9,7 @@ draft: false
 
 作者：[James Walker](https://spacelift.io/blog/author/jamesw)
 
-![docker](/docker_logo.png "docker")
+![docker](/docker_logo.png 'docker')
 
 [Docker](https://www.docker.com) 是一个用于构建和运行容器的平台。容器是将源代码及其依赖关系打包到隔离环境中的软件单元。它们通常是短暂的，当容器停止时，容器文件系统中的内容就会被处理掉，但你也可以使用 [volume（卷）](https://spacelift.io/blog/docker-volumes) 等功能持久地存储数据。
 
@@ -52,7 +52,7 @@ echo \
 sudo apt-get update
 ```
 
-> Note：如果你使用的是 Ubuntu 的衍生发行版，如 Linux Mint，你可能需要使用 UBUNTU\_CODENAME 而不是 VERSION\_CODENAME。
+> Note：如果你使用的是 Ubuntu 的衍生发行版，如 Linux Mint，你可能需要使用 UBUNTU_CODENAME 而不是 VERSION_CODENAME。
 
 安装 Docker 软件包：
 
@@ -62,11 +62,11 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 
 它们的作用如下：
 
-* docker-ce：管理容器的 Docker 守护进程。
-* docker-ce-cli：用于与守护进程交互的 CLI。
-* containerd.io：[Containerd](https://containerd.io) 是一个容器运行时，它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，以便根据 Docker 守护进程的请求启动和运行容器。
-* docker-buildx-plugin：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展构建功能的 CLI 插件。
-* docker-compose-plugin：用于定义和运行多容器应用程序的插件。
+- docker-ce：管理容器的 Docker 守护进程。
+- docker-ce-cli：用于与守护进程交互的 CLI。
+- containerd.io：[Containerd](https://containerd.io) 是一个容器运行时，它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，以便根据 Docker 守护进程的请求启动和运行容器。
+- docker-buildx-plugin：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展构建功能的 CLI 插件。
+- docker-compose-plugin：用于定义和运行多容器应用程序的插件。
 
 #### 检查 Docker 是否正常工作
 
@@ -105,8 +105,8 @@ To generate this message, Docker took the following steps:
 
 在开始正确使用 Docker 之前，了解你会遇到的两个主要概念非常重要：
 
-* image（镜像）：所有容器都是从镜像启动的。镜像定义了容器文件系统的初始状态。它类似于传统虚拟机的安装介质。在 [Docker Hub](https://hub.docker.com) 等公共存储库中有预构建的镜像，其中包括常用[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)的选项。
-* container（容器）：容器是镜像的一个实例。它是一个独立于其他容器和主机上现有进程的运行进程。你可以同时启动多个相同镜像的容器。容器在镜像之上有一个可写文件系统层，允许进行修改。
+- image（镜像）：所有容器都是从镜像启动的。镜像定义了容器文件系统的初始状态。它类似于传统虚拟机的安装介质。在 [Docker Hub](https://hub.docker.com) 等公共存储库中有预构建的镜像，其中包括常用[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)的选项。
+- container（容器）：容器是镜像的一个实例。它是一个独立于其他容器和主机上现有进程的运行进程。你可以同时启动多个相同镜像的容器。容器在镜像之上有一个可写文件系统层，允许进行修改。
 
 现在，你可以开始自信地使用容器（运行进程）和镜像（你启动容器的可重用模板）了。
 
@@ -142,7 +142,7 @@ docker run -d nginx:latest
 
 ### 创建镜像
 
-镜像通常使用 [Dockerfile](https://spacelift.io/blog/dockerfile) 创建，这些文本文件包含一系列组装镜像文件系统的指令。复制以下示例并将其保存到新目录中名为 Dockerfile 的文件中：
+镜像通常使用 [Dockerfile](/posts/docker-dockerfile) 创建，这些文本文件包含一系列组装镜像文件系统的指令。复制以下示例并将其保存到新目录中名为 Dockerfile 的文件中：
 
 ```dockerfile
 # title Dockerfile
@@ -194,7 +194,7 @@ docker run demo-image:latest
 docker login
 ```
 
-接下来，你必须为你的镜像添加特殊标签，以便它能引用你的 Docker Hub 用户名。以下命令会在现有镜像中添加另一个标签，将 **\<DOCKER\_HUB\_USERNAME>** 替换为真实的 Docker Hub 用户名：
+接下来，你必须为你的镜像添加特殊标签，以便它能引用你的 Docker Hub 用户名。以下命令会在现有镜像中添加另一个标签，将 **\<DOCKER_HUB_USERNAME>** 替换为真实的 Docker Hub 用户名：
 
 ```bash
 docker tag demo-image:latest <DOCKER_HUB_USERNAME>/demo-image:latest
