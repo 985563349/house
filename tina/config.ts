@@ -2,10 +2,7 @@ import { defineConfig } from 'tinacms';
 
 // Your hosting provider likely exposes this as an environment variable
 const branch =
-  process.env.GITHUB_BRANCH ||
-  process.env.VERCEL_GIT_COMMIT_REF ||
-  process.env.HEAD ||
-  'main';
+  process.env.GITHUB_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || process.env.HEAD || 'main';
 
 export default defineConfig({
   branch,
@@ -137,6 +134,28 @@ export default defineConfig({
                   },
                 ],
               },
+              {
+                name: 'Heading',
+                label: 'Heading',
+                fields: [
+                  {
+                    name: 'id',
+                    type: 'string',
+                  },
+                  {
+                    name: 'children',
+                    type: 'string',
+                  },
+                  {
+                    name: 'variant',
+                    type: 'string',
+                  },
+                  {
+                    name: 'anchor',
+                    type: 'boolean',
+                  },
+                ],
+              },
             ],
           },
         ],
@@ -234,6 +253,28 @@ export default defineConfig({
                     label: 'id',
                     type: 'string',
                     required: true,
+                  },
+                ],
+              },
+              {
+                name: 'Heading',
+                label: 'Heading',
+                fields: [
+                  {
+                    name: 'id',
+                    type: 'string',
+                  },
+                  {
+                    name: 'children',
+                    type: 'string',
+                  },
+                  {
+                    name: 'variant',
+                    type: 'string',
+                  },
+                  {
+                    name: 'anchor',
+                    type: 'boolean',
                   },
                 ],
               },
