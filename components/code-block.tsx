@@ -114,12 +114,12 @@ export type CodeBlockProps = {
   value: string;
 };
 
-const CodeBlock = (props?: CodeBlockProps) => {
+const CodeBlock: React.FC<CodeBlockProps> = (props) => {
   return (
     <Code
       className="border dark:border-none"
       style={{ borderRadius: '0.375rem' }}
-      lang={props?.lang}
+      lang={props.lang}
       theme={{
         dark: 'material-palenight',
         light: 'material-lighter',
@@ -127,7 +127,7 @@ const CodeBlock = (props?: CodeBlockProps) => {
       }}
       extensions={[title, highlight, fileIcons, focus]}
     >
-      {props?.value}
+      {props.value}
     </Code>
   );
 };

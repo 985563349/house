@@ -2,7 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 
-const GitHubGistEmbed = (props: any) => {
+export type GitHubGistEmbedProps = {
+  id: string;
+};
+
+const GitHubGistEmbed: React.FC<GitHubGistEmbedProps> = (props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
