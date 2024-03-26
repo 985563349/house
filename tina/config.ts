@@ -159,10 +159,6 @@ export default defineConfig({
             ],
           },
         ],
-        ui: {
-          // This is an DEMO router. You can remove this to fit your site
-          router: ({ document }) => `/demo/posts/${document._sys.filename}`,
-        },
       },
       {
         name: 'note',
@@ -281,10 +277,6 @@ export default defineConfig({
             ],
           },
         ],
-        ui: {
-          // This is an DEMO router. You can remove this to fit your site
-          router: ({ document }) => `/demo/notes/${document._sys.filename}`,
-        },
       },
       {
         name: 'topic',
