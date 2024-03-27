@@ -1,0 +1,262 @@
+---
+title: 【译】如何公开 Docker 端口
+topic: content/topics/docker.mdx
+date: 2024-03-26T16:00:00.000Z
+draft: false
+---
+
+原文地址：[How to Expose a Docker Port – Tutorial & Examples](https://spacelift.io/blog/docker-expose-port)
+
+作者：[James Walker](https://spacelift.io/blog/author/jamesw)
+
+![docker](/docker_logo.png 'docker')
+
+[Docker 的网络模型](https://spacelift.io/blog/docker-networking)将容器与主机系统隔离开来。容器存在于自己的网络命名空间中，并拥有独立的端口范围。
+
+Docker 不会自动在容器之外公开端口。要通过主机网络访问容器，必须自行公开和绑定目标容器端口。这样，你就可以从主机的网络接口将流量导向容器。
+
+由于术语上的微妙差别，处理 Docker 端口可能会令人困惑。在本文中，你将了解公开端口的含义，以及它与绑定（也称为发布）操作有何不同。我们将展示一些公开和绑定容器端口的详细示例。
+
+我们将介绍：
+
+1. [什么是在 Docker 中公开端口？](#what-is-exposing-a-port-in-docker)
+2. [如何在 Dockerfile 中公开端口](#how-to-expose-a-port-in-a-dockerfile)
+3. [如何在创建 Docker 容器时公开端口](#how-to-expose-ports-when-creating-a-docker-container)
+4. [公开 Docker 端口 - 示例](#exposing-docker-ports-example)
+5. [如何公开多个 Docker 端口](#how-to-expose-multiple-docker-ports)
+6. [如何绑定公开的端口](#how-to-publish-exposed-ports)
+
+<Heading
+  id="what-is-exposing-a-port-in-docker"
+  variant="h2"
+  children="什么是在 Docker 中公开端口？"
+  anchor={true}
+/>
+
+公开一个 Docker 端口意味着它被容器化工作负载积极使用。Docker 会显示容器公开的端口信息，让你决定将哪些端口绑定到主机上。
+
+要知道，**公开端口并不会自动将其绑定到主机上**。在 Docker 中，公开的端口纯粹是元数据。它们记录了容器化应用程序监听的端口。
+
+例如，Web 服务器的 Dockerfile 可以包含以下指令：
+
+```dockerfile
+EXPOSE 80
+```
+
+这意味着在容器中运行的应用程序监听 **80** 端口，因此用户应该将该端口绑定到其主机，以便从容器外部访问服务器。不过，该指令不会导致容器启动时自动绑定端口。
+
+对于一些 Docker 新手来说，公开端口似乎是多余的，因为你可以绑定端口而无需先公开它们。不过，公开仍然是一种重要的文档机制，它能让你的容器更容易管理和推断。
+
+公开的端口列表会立即告诉你哪些端口应该绑定到容器上，同时还会显示分配给容器但未使用的主机端口。也可以在启动容器时自动绑定所有公开的端口，从而节省部署新应用实例的时间。
+
+### 公开端口与绑定端口
+
+如上文所述，公开端口是一种被动行为，仅表示容器能够监听该端口。与端口的外部通信必须通过将其绑定到主机上来启用。此过程将主机端口映射到容器内的端口。
+
+用户和其他教程经常将这些过程混为一谈，绑定端口通常被描述为 “公开” 端口，因为这样可以通过主机的网络协议栈访问端口。然而，这个术语并不准确，因为它忽略了以下两种可能性：一种是公开了 Docker 端口而没有绑定它，另一种是绑定了一个没有公开的端口。
+
+- 公开端口：设置元数据，表明容器中的应用程序或服务将监听该端口。
+- 绑定/发布端口：将主机端口分配给容器端口，允许从主机的网络接口与容器通信。
+
+<Heading
+  id="how-to-expose-a-port-in-a-dockerfile"
+  variant="h2"
+  children="如何在 Dockerfile 中公开端口"
+  anchor={true}
+/>
+
+在 Docker 中公开端口主要有两种方法，一种是在 [Dockerfile](/posts/docker-dockerfile) 中使用上面的 [**EXPOSE** 指令](https://docs.docker.com/reference/dockerfile/#expose)，另一种是在使用 **docker run** 启动容器时设置 **--expose** 标志。
+
+要在 Dockerfile 中公开端口，应为每个要公开的端口使用 **EXPOSE** 指令。
+
+```dockerfile
+EXPOSE 80
+```
+
+默认情况下，端口将以 TCP 方式公开。你可以通过显示请求公开 UDP：
+
+```dockerfile
+EXPOSE 80/udp
+```
+
+要同时使用 TCP 和 UDP 公开一个端口，请重复 **EXPOSE** 指令两次，每种模式一次：
+
+```dockerfile
+EXPOSE 80/tcp
+EXPOSE 80/udp
+```
+
+当你从 Dockerfile 中使用 **EXPOSE** 指令的 Docker 镜像启容器时，Docker 会自动公开所有列出的端口。
+
+<Heading
+  id="how-to-expose-ports-when-creating-a-docker-container"
+  variant="h2"
+  children="如何在创建 Docker 容器时公开端口"
+  anchor={true}
+/>
+
+有时，你可能想在启动容器时手动公开一个端口。这可以通过在 **docker run** 命令中加入 **--expose** 标志来实现。
+
+```bash
+docker run my-container:latest --expose 80
+```
+
+你可以重复使用该标志来公开多个端口。与上述 **EXPOSE** 指令类似，你也可以使用 **\<port>/tcp** 和 **\<port>/udp** 语法请求 TCP 和/或 UDP 公开。如果只输入端口号，则默认选择 TCP。
+
+实际上，**--expose** 并不常用。容器可以监听的端口通常与镜像的 Dockerfile 中定义的端口一致。在启动容器时设置额外的公开端口一般不会有什么帮助，因为如果应用程序实际上不使用这些端口，它们就不会有任何作用。
+
+<Heading
+  id="exposing-docker-ports-example"
+  variant="h2"
+  children="公开 Docker 端口 - 示例"
+  anchor={true}
+/>
+
+下面是一个快速演示，向你展示如何公开端口并检查其值。
+
+### 使用 Dockerfile EXPOSE 公开端口
+
+下面是一个简单的 Dockerfile，它定义了一个带有公开端口的镜像：
+
+```dockerfile
+FROM alpine:latest
+EXPOSE 80
+CMD ["sleep", "300"]
+```
+
+创建镜像，然后从中启动一个容器：
+
+```bash
+docker build -t demo-image:latest .
+docker run -d --name demo docker-image:latest
+```
+
+### 使用 Docker run expose
+
+如果无法控制镜像的 Dockerfile，可以在启动容器时手动公开端口：
+
+```bash
+docker run -d --name demo-run --expose 443 demo-image:latest
+```
+
+### 查看公开的端口
+
+要查看容器公开的端口，请使用 **docker ps** 命令：
+
+```bash
+# focus(1)
+docker ps
+
+CONTAINER ID   IMAGE               COMMAND       CREATED              STATUS                  PORTS             NAMES
+2fdfd038a368   demo-image:latest   "sleep 300"   2 seconds ago        Up Less than a second   80/tcp, 443/tcp   demo-run
+dd50cd05e515   demo-image:latest   "sleep 300"   About a minute ago   Up About a minute       80/tcp            demo
+```
+
+<Heading
+  id="how-to-expose-multiple-docker-ports"
+  variant="h2"
+  children="如何公开多个 Docker 端口"
+  anchor={true}
+/>
+
+查看主机上运行的容器，每个容器公开的端口都会显示 **PORTS** 一栏中。
+
+如上述所述，你可以通过重复执行 Dockerfile 的 **EXPOSE** 指令或 **docker run** 的 **--expose** 标志，为一个容器公开多个端口。
+
+如果 **EXPOSE** 和 **--expose** 都用于一个容器，那么所有引用的端口都会被公开。你可以从上面的 **docker ps** 输出演示中看到这一点，其中演示运行的容器同时暴露了 80 端口（来自其镜像的 Dockerfile）和 443 端口（来自 **docker run** 命令行）。
+
+<Heading
+  id="how-to-publish-exposed-ports"
+  variant="h2"
+  children="如何绑定公开的端口"
+  anchor={true}
+/>
+
+在外部流量到达容器之前，需要将公开的端口绑定到主机（通常是将容器的端口与主机的端口进行映射）。这可以使用 **docker run** 的 **-p** 标志来实现：
+
+```bash
+docker run -d --name nginx -p 80:80 nginx:latest
+```
+
+此示例将主机的 80 端口映射到容器内的 80 端口。然后，你就可以使用主机的网络接口访问容器化应用程序了：
+
+```bash
+# focus(1)
+curl http://localhost:80
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+```
+
+绑定的端口会显示在 **docker ps** 命令输出的 **PORTS** 栏中。与只显示容器使用的端口号（如：80/tcp）的公开端口不同，已绑定的端口会显示主机端口和容器端口之间的映射：
+
+```bash
+# focus(1)
+docker ps
+
+CONTAINER ID   IMAGE          COMMAND                  CREATED             STATUS             PORTS                               NAMES
+cafc1f042132   nginx:latest   "/docker-entrypoint.…"   About an hour ago   Up About an hour   0.0.0.0:80->80/tcp, :::80->80/tcp   nginx
+```
+
+### 重映射已绑定的端口
+
+从主机分配的端口不一定与容器监听的端口相同。在本示例中，你使用主机端口 8080 映射到容器端口 80：
+
+```bash
+# focus(1:2)
+docker run -d --name nginx -p 8080:80 nginx:latest
+cur http://localhost:8080
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+```
+
+### 将端口绑定到特定主机接口（如：localhost）
+
+上述端口绑定示例将容器端口绑定到主机上所有网络接口。这样，网络上的其他设备就可以访问容器。
+
+对于只应公开给直接在主机上运行的邻居服务来说，这可能会带来安全风险。幸运的是，你可以使用 **host_address:host_port:container_port** 语法将端口绑定到特定的主机接口：
+
+```bash
+docker run -d --name nginx -p 127.0.0.1:8080:80 nginx:latest
+```
+
+在这个例子中，Docker 主机 **127.0.0.1** （即 localhost）上的 8080 端口被映射到容器中的 80 端口。从不同 IP 地址（如主机的公共网络接口）到达该端口的流量不会到达该容器。
+
+### 自动绑定公开的端口
+
+到目前为止，我们的端口公开和绑定演示完全是独立的。我们使用两个手动步骤公开端口并绑定它们。你可以绑定任何端口，无论它是否已公开，也可以选择不绑定已公开的端口。
+
+不过，由于公开端口意味着容器会使用该端口，因此在大多数情况下，你会希望绑定容器公开的所有端口。在使用 **docker run** 启动容器时，可以通过设置 **-P (--publish-all)** 标志来实现这一点：
+
+```bash
+docker run -d -P --name demo demo-image:latest
+```
+
+这样就不必先检查镜像公开了哪些端口，然后再用明确的 **-p** 标志手动绑定它们。“全部发布” 选项会将一个主机端口随机映射到每个公开的容器端口上。
+
+容器的 **docker ps** 输出会确认哪些端口已被映射：
+
+```bash
+# focus(1:2)
+docker ps
+
+CONTAINER ID   IMAGE               COMMAND                  CREATED             STATUS             PORTS                                     NAMES
+d66f376e3860   demo-image:latest   "sleep 300"              2 seconds ago       Up 1 second        0.0.0.0:32768->80/tcp, :::32768->80/tcp   demo
+```
+
+在我们的演示 Dockerfile 中的 **EXPOSE** 指令中定义的容器端口 80 已被随机分配给主机端口 **32768**，这是因为启动容器时包含了 **-P** 标志。
+
+## 要点
+
+本文向你介绍如何为 Docker 容器公开和绑定端口。概括的说，公开的端口是一种元数据，表示容器中的应用程序使用的端口号。公开的端口绑定后，就可以创建一个与主机的映射，从而使容器可以被访问。
+
+绑定是容器启动时的运行时操作，而公开端口是由镜像作者在 Dockerfile 中定义的。了解这一区别将有助于你在 Docker 容器和镜像中正确管理端口。
+
+我们还鼓励你探索 [**Spacelift**](https://spacelift.io) 如何在定制工作流程方面提供充分的灵活性。你可以将自己的 Docker 镜像[作为运行程序](https://docs.spacelift.io/integrations/docker)使用，以加快利用第三方工具的部署速度。Spacelift 的官方运行程序镜像可在[此处](https://github.com/spacelift-io/runner-terraform)找到。
+
+感谢 James Walker。
