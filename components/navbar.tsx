@@ -18,10 +18,8 @@ import { RiGithubFill } from 'react-icons/ri';
 import { ThemeToggle } from './theme-toggle';
 
 const menuItems = [
-  { name: 'Home', href: '/' },
-  { name: 'Blog', href: '/posts' },
-  { name: 'Notes', href: '/notes' },
-  { name: 'Projects', href: '/projects' },
+  { name: '首页', href: '/' },
+  { name: '博客', href: '/posts' },
 ];
 
 const CustomNavbar: React.FC = () => {
@@ -29,24 +27,14 @@ const CustomNavbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <Navbar
-      maxWidth="full"
-      height="5.5rem"
-      shouldHideOnScroll
-      isMenuOpen={isMenuOpen}
-      onMenuOpenChange={setIsMenuOpen}
-    >
+    <Navbar maxWidth="full" height="5.5rem" shouldHideOnScroll isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
       <NavbarContent className="sm:hidden" justify="start">
-        <NavbarMenuToggle
-          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-          className="outline-none"
-        />
+        <NavbarMenuToggle aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} className="outline-none" />
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
         {menuItems.map((item) => {
-          const isActive =
-            item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
+          const isActive = item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
 
           return (
             <NavbarItem key={item.name}>
@@ -60,13 +48,7 @@ const CustomNavbar: React.FC = () => {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button
-            href="https://github.com/985563349"
-            target="_blank"
-            as={Link}
-            variant="light"
-            isIconOnly
-          >
+          <Button href="https://github.com/985563349" target="_blank" as={Link} variant="light" isIconOnly>
             <RiGithubFill className="w-6 h-6 text-foreground" />
           </Button>
         </NavbarItem>
@@ -78,8 +60,7 @@ const CustomNavbar: React.FC = () => {
 
       <NavbarMenu className="overflow-y-hidden">
         {menuItems.map((item) => {
-          const isActive =
-            item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
+          const isActive = item.href === '/' ? pathname === item.href : pathname?.startsWith(item.href);
 
           return (
             <NavbarMenuItem key={item.name} onClick={() => setIsMenuOpen(false)}>

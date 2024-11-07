@@ -3,12 +3,13 @@ import { format } from 'date-fns';
 import { Markdown } from '@/components/markdown';
 import client from '@/tina/__generated__/client';
 
-type Props = {
-  params: { slug: string };
-};
+export const revalidate = 3600; // invalidate every hour
 
-export async function generateMetadata({ params }: Props) {
-  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
+export const dynamicParams = true;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
 
   return {
     title: data.post.title,
@@ -27,10 +28,9 @@ export async function generateStaticParams() {
   }));
 }
 
-export const revalidate = 3600;
-
-export default async function Post({ params }: Props) {
-  const { data } = await client.queries.post({ relativePath: `${params.slug}.mdx` });
+export default async function Post({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
 
   return (
     <article className="prose dark:prose-invert prose-pre:rounded-none prose-a:underline-offset-4 prose-a:decoration-text-link hover:prose-a:text-text-link">

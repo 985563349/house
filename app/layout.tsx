@@ -12,7 +12,7 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap' });
 export const metadata: Metadata = {
   title: {
     template: '%s - Jee',
-    default: 'Jee',
+    default: 'Jee 的 Web 开发日志',
   },
   description: "Jee's portfolio",
   authors: [{ name: 'Jee' }],

@@ -1,14 +1,14 @@
-import client from '@/tina/__generated__/client';
 import { TinaMarkdown } from 'tinacms/dist/rich-text';
+import client from '@/tina/__generated__/client';
 
-export const revalidate = 3600;
+export const revalidate = 3600; // invalidate every hour
 
 export default async function Home() {
   const { data } = await client.queries.page({ relativePath: 'home.mdx' });
 
   return (
     <section>
-      <h1 className="my-10 font-extrabold text-6xl text-center">{data.page.title}</h1>
+      <h1 className="my-10 font-extrabold text-4xl">{data.page.title}</h1>
 
       <TinaMarkdown
         content={data.page.body}

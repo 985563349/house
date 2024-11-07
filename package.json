@@ -10,29 +10,28 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.2.10",
-    "bright": "^0.8.4",
-    "date-fns": "^3.3.1",
-    "framer-motion": "^11.0.14",
-    "next": "14.1.0",
-    "next-themes": "^0.2.1",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-icons": "^5.0.1",
+    "@nextui-org/react": "^2.4.8",
+    "bright": "^0.8.5",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.11.11",
+    "next": "15.0.1",
+    "next-themes": "^0.4.3",
+    "react": "^19.0.0-rc-69d4b800-20241021",
+    "react-dom": "^19.0.0-rc-69d4b800-20241021",
+    "react-icons": "^5.3.0",
     "seti-icons": "^0.0.4",
-    "tinacms": "^1.5.28"
+    "tinacms": "^2.4.0"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.10",
-    "@tinacms/cli": "^1.5.39",
-    "@types/node": "^20.11.21",
+    "@tailwindcss/typography": "^0.5.15",
+    "@tinacms/cli": "^1.6.11",
+    "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "autoprefixer": "^10.0.1",
     "eslint": "^8",
-    "eslint-config-next": "14.0.1",
+    "eslint-config-next": "15.0.1",
     "postcss": "^8",
-    "tailwindcss": "^3.3.0",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
 }
