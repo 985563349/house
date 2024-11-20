@@ -1,0 +1,340 @@
+---
+title: 使用 Server Action 操作表单时的问题
+topic: content/topics/next-js.mdx
+date: 2024-11-06T16:00:00.000Z
+draft: false
+---
+
+Server Action 是在 NextJS 服务器上执行的异步函数，它的功能非常强大，你可以通过它调用数据接口、运行 Node 代码，甚至操作数据库。
+
+服务器组件与客户端组件都支持 Server Action，你可以在 form action、事件处理函数、useEffect 中使用它。
+
+如果你在表单操作中使用了 Server Action，那么有以下几个问题需要注意：
+
+1. 如何处理错误
+
+2. 如何设置待定状态
+
+3. 提交失败后如何阻止表单被重置
+
+## 处理错误
+
+表单操作中如果对 Server Action 抛出的错误处理不当，会直接导致应用崩溃。通常我们期望的是能将错误捕获，并把错误信息展示在视图上。
+
+那么，具体应该如何操作？
+
+我们先从一个案例开始，用户可以使用带有 Server Action 操作的表单创建待办事项。当用户提交表单时，数据将发送到服务器：
+
+```tsx
+// title todo-form.tsx
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  return (
+    <form action={createTodo}>
+      <label htmlFor="title">Title: </label>
+      <input id="title" name="title" />
+
+      <label htmlFor="content">Content: </label>
+      <textarea id="content" name="content" />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+表单有两个字段和一个提交按钮，当用户点击提交按钮时，将调用 Server Action 提取表单数据，然后在数据库中创建一个待办事项：
+
+```tsx
+// title create-todo.ts
+'use server';
+
+export const createTodo = async (formData: FormData) => {
+  const data = {
+    name: formData.get('title'),
+    content: formData.get('content),
+  };
+
+  if (!data.title || !data.content) {
+    throw new Error('Please fill in all fields');
+  }
+
+  // TODO: create todo in database
+};
+```
+
+当验证或数据库错误导致提交失败，Server Action 会抛出一个错误。如果未对错误进行处理，那么应用将会崩溃。
+
+NextJS 官方提供了两种方案可用于处理 Server Action 错误：**Error Boundaries** 和 **useActionState**。
+
+- Error Boundaries：捕获任意层级的子组件渲染错误，提供一个降级渲染的 UI。如果你是**通过 throw 的方式**抛出错误，并且期望可以捕获到更多未知的错误，那么可以使用它。
+
+- useActionState：用于管理 Server Action 的状态。可用于处理错误，但**错误必须被设置为返回值**，而不是通过 throw 抛出。
+
+如文章开头所述，我们在进行表单操作时，期望的是能捕获错误，并将错误信息显示在视图上。使用 Error Boundaries 处理，视图会被降级渲染，显然结果并不符合我们的期望。
+
+使用 useActionState 处理，视图不会被降级渲染，同时还能获取到异常信息，这几乎完全符合我们的期望。只需要我们对抛出错误的方式进行改造，并将错误控制到可预知的范围。
+
+我们改造一下上述案例，使用 useActionState 来处理错误：
+
+```tsx
+// title todo-form.tsx
+'use client';
+
+import { useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  const [state, formAction] = useActionState(createTodo, null);
+
+  return (
+    <>
+      <form action={formAction}>
+        <label htmlFor="title">Title: </label>
+        <input id="title" name="title" />
+
+        <label htmlFor="content">Content: </label>
+        <textarea id="content" name="content" />
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <p>{state?.error}</p>
+    </>
+  );
+};
+```
+
+需要注意的是，useActionState 因为要维持状态所以只能在客户端组件中使用。因此我们需要在代码开头添加 **use client** 标志。
+
+useActionState 的第一个参数为操作函数，第二个参数为状态初始值。操作函数执行完毕后，返回值将会替换这个状态。
+
+我们通过 **state?.error** 从状态中读取了错误信息，改造一下 Server Action，将错误设置为返回值：
+
+```ts
+// title create-todo.ts
+'use server';
+
+export const createTodo = async (previousState: any, formData: FormData) => {
+  const data = {
+    name: formData.get('title'),
+    content: formData.get('content),
+  };
+
+  if (!data.title || !data.content) {
+    return { error: 'Please fill in all fields' };
+  }
+
+  // TODO: create todo in database
+};
+```
+
+此时用户再进行操作，如果出现验证错误那么错误信息将会显示在视图上。同理，当数据库操作出现错误时，我们可以对其进行捕获，然后以同样的方式返回。
+
+## 待定状态
+
+在用户提交表单操作后，如果响应过慢，通常我们会期望展示一个待定状态以防止用户重复操作和缓解等待焦虑。
+
+useActionState 返回了一个 pending 标志，可以告诉你是否有正在处理的操作。我们可以通过它来设置表单的待定状态：
+
+```tsx
+// title todo-form.tsx
+'use client';
+
+import { useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  const [state, formAction, isPending] = useActionState(createTodo, null);
+
+  return (
+    <form action={formAction}>
+      <label htmlFor="title">Title: </label>
+      <input id="title" name="title" />
+
+      <label htmlFor="content">Content: </label>
+      <textarea id="content" name="content" />
+
+      <button type="submit" disabled={isPending}>
+        {isPending ? 'Pending' : 'Submit'}
+      </button>
+    </form>
+  );
+};
+```
+
+## 表单重置
+
+在 React 中表单如果没有设置为受控或者阻止默认行为，通常会在提交后自动重置。即使你使用了 Server Action 操作表单该行为也并不会被改变。
+
+因此，表单提交无论是否成功都会被重置。也就意味着即使用户只写错一个字符导致表单提交失败，也必须重新填写整个表单。
+
+这并不是好的用户体验，我们更期望的是在提交失败后不重置，状态能维持原状。
+
+也许你会想到，通过阻止默认行为，或者将表单设置为受控，来解决这个问题。
+
+### 阻止默认行为
+
+阻止默认行为能成功的阻止重置，但同时 action 的触发也会被阻止，你需要将其改写到 submit 事件中才能完成提交：
+
+```tsx
+'use client';
+
+import { useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        createTodo(new FormData(e.currentTarget));
+      }}
+    >
+      <label htmlFor="title">Title: </label>
+      <input id="title" name="title" />
+
+      <label htmlFor="content">Content: </label>
+      <textarea id="content" name="content" />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+如果你使用了 useActionState 管理 Server Action，还需要在 **startTransition** 中调用才能完成正确的提交：
+
+```tsx
+// title todo-form.tsx
+'use client';
+
+import { startTransition, useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  const [state, formAction, isPending] = useActionState(createTodo, null);
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        startTransition(() => {
+          formAction(new FormData(e.currentTarget));
+        });
+      }}
+    >
+      <label htmlFor="title">Title: </label>
+      <input id="title" name="title" />
+
+      <label htmlFor="content">Content: </label>
+      <textarea id="content" name="content" />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+### 表单受控
+
+将表单置为受控，是个不错的方案。不过在你拥有过多的表单项时，你可能需要引入表单管理工具，来帮助你减少所需要维护的状态数量。
+
+```tsx
+'use client';
+
+import { useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+
+  return (
+    <form action={createTodo}>
+      <label htmlFor="title">Title: </label>
+      <input
+        id="title"
+        name="title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+
+      <label htmlFor="content">Content: </label>
+      <textarea
+        id="content"
+        name="content"
+        value={title}
+        onChange={(e) => setContent(e.target.value)}
+      />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+### useActionState
+
+上文中提到 useActionState 在操作函数执行完毕后，返回值将替换原本的状态。利用这一点，我们同样可以做到阻止表单重置。
+
+我们通过案例来看具体是如何实现的：
+
+```tsx
+// title todo-form.tsx
+'use client';
+
+import { startTransition, useActionState } from 'react';
+import { createTodo } from '../actions/create-todo';
+
+const TodoForm = () => {
+  const [state, formAction, isPending] = useActionState(createTodo, null);
+
+  return (
+    <form action={formAction}>
+      <label htmlFor="title">Title: </label>
+      <input
+        id="title"
+        name="title"
+        defaultValue={(state?.formData?.get('title') ?? '') as string}
+      />
+
+      <label htmlFor="content">Content: </label>
+      <textarea
+        id="content"
+        name="content"
+        defaultValue={(state?.formData?.get('content') ?? '') as string}
+      />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+我们使用 **state?.formData** 从状态中读取了 formData，改造一下 Server Action，将 formData 设置为返回值：
+
+```ts
+// title create-todo.ts
+'use server';
+
+export const createTodo = async (previousState: any, formData: FormData) => {
+  const data = {
+    name: formData.get('title'),
+    content: formData.get('content),
+  };
+
+  if (!data.title || !data.content) {
+    return { formData };
+  }
+
+  // TODO: create todo in database
+};
+```
+
+此时用户再进行操作，如果提交失败表单并不会被重置，状态依旧维持原状。
+
+以上三种方案都能有效的阻止用户在提交提交失败后表单被重置，你可以根据具体需求选择不同的方案来实现。
+
+例如，需要将数据信息预先填充到表单，那么显然受控的方式更适合你。如果只是想简单阻止表单被重置，那么阻止默认行为或者 useActionState 的方案都可以使用。

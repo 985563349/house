@@ -40,7 +40,10 @@ export default async function Posts() {
 
                 <div className="pt-1 italic text-sm text-text-muted">
                   <time dateTime={post?.node?.date}>
-                    {format(date, isSameYear(new Date(), date) ? 'MM-dd' : 'yyyy-MM-dd')}
+                    {format(
+                      date,
+                      isSameYear(new Date(), date) ? 'MM-dd' : 'yyyy-MM-dd'
+                    )}
                   </time>
                 </div>
               </div>
