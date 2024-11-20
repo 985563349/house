@@ -65,17 +65,17 @@ export default function Page() {
 ```tsx
 // title error-component.tsx
 export const ErrorComponent: React.FC = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
   try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     if (Math.random() > 0.5) {
       throw new Error('Error thrown in component');
     }
+
+    return <div>This has a 50% chance of throwing an error.</div>;
   } catch {
     return <div>Something went wrong!</div>;
   }
-
-  return <div>This has a 50% chance of throwing an error.</div>;
 };
 ```
 
@@ -146,12 +146,14 @@ try catch 捕获中使用：
 import { RefreshButton } from './refresh-button';
 
 export const ErrorComponent: React.FC = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
   try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     if (Math.random() > 0.5) {
       throw new Error('Error thrown in component');
     }
+
+    return <div>This has a 50% chance of throwing an error.</div>;
   } catch {
     return (
       <div>
@@ -160,8 +162,6 @@ export const ErrorComponent: React.FC = async () => {
       </div>
     );
   }
-
-  return <div>This has a 50% chance of throwing an error.</div>;
 };
 ```
 
