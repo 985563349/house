@@ -1,0 +1,226 @@
+---
+title: 如何处理服务器组件错误
+topic: ''
+date: 2024-11-19T16:00:00.000Z
+draft: false
+---
+
+在构建大型 Web 应用时，服务器组件可以让你无需向客户端发送数兆字节的 JavaScript。它们允许你在服务器上渲染组件并将其传输到客户端，从而显著的提高应用程序的性能。
+
+然而，服务器组件也会出错，就像普通的 React 组件一样。在本文中，我们将探讨如何处理服务器组件的错误。
+
+我们先从一个案例开始，定义两个服务器组件：
+
+```tsx
+// title banner.tsx
+export const Banner: React.FC = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  return <div>Banner</div>;
+};
+```
+
+其中一个组件会随机抛出错误：
+
+```tsx
+// title error-component.tsx
+export const ErrorComponent: React.FC = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  if (Math.random() > 0.5) {
+    throw new Error('Error thrown in component');
+  }
+
+  return <div>This has a 50% chance of throwing an error.</div>;
+};
+```
+
+在页面中使用这个两个组件。如果不出意外，应用将会有 50% 的概率崩溃：
+
+```tsx
+// title page.tsx
+import { Banner } from './component/banner';
+import { ErrorComponent } from './component/error-component';
+
+export default function Page() {
+  return (
+    <div>
+      <Banner />
+      <ErrorComponent />
+    </div>
+  );
+}
+```
+
+那么，我们该如何处理这个问题？
+
+我们期望的是，能捕获到组件渲染的错误，提供降级渲染 UI，并且能让组件尝试从错误中恢复。
+
+## 捕获错误
+
+你可以通过两种方式捕获错误，并提供降级渲染的 UI，`try catch` 和 `error boundary`。
+
+使用 try catch 捕获错误：
+
+```tsx
+// title error-component.tsx
+export const ErrorComponent: React.FC = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  try {
+    if (Math.random() > 0.5) {
+      throw new Error('Error thrown in component');
+    }
+  } catch {
+    return <div>Something went wrong!</div>;
+  }
+
+  return <div>This has a 50% chance of throwing an error.</div>;
+};
+```
+
+使用 error boundary 捕获错误：
+
+```tsx
+// title page.tsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+import { Banner } from './component/banner';
+import { ErrorComponent } from './component/error-component';
+
+export default function Page() {
+  return (
+    <div>
+      <Banner />
+      <ErrorBoundary fallback={<div>Something went wrong!</div>}>
+        <ErrorComponent />
+      </ErrorBoundary>
+    </div>
+  );
+}
+```
+
+也许你会想到使用 **error routing** ，虽然它也能捕获错误防止应用崩溃，但我强烈建议你不要这么做。
+
+因为 error routing 会导致整个页面都降级渲染，正确的处理方式是只让发生错误的组件进入降级渲染，而渲染正常的组件能成功显示。
+
+## 错误恢复
+
+在组件进入降级渲染后，我们应该提供一个操作能让其尝试从错误中恢复。
+
+NextJS 提供了一个方法能重新渲染服务器组件帮助其从错误中恢复，我们定义一个按钮组件，点击后运行这个方法：
+
+```tsx
+// title refresh-button.tsx
+'use client';
+
+import { startTransition } from 'react';
+import { useRouter } from 'next/navigation';
+
+export const RefreshButton: React.FC<{ onClick?: () => void }> = ({
+  onClick,
+}) => {
+  const router = useRouter();
+
+  return (
+    <button
+      onClick={() => {
+        startTransition(() => {
+          onClick?.();
+          router.refresh();
+        });
+      }}
+    >
+      Refresh
+    </button>
+  );
+};
+```
+
+**router.refresh** 方法会刷新路由，重新向服务器发出请求获取数据，渲染服务器组件。并且不会影响客户端组件（例如 useState）或浏览器状态（例如滚动位置）。
+
+try catch 捕获中使用：
+
+```tsx
+// title error-component.tsx
+import { RefreshButton } from './refresh-button';
+
+export const ErrorComponent: React.FC = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  try {
+    if (Math.random() > 0.5) {
+      throw new Error('Error thrown in component');
+    }
+  } catch {
+    return (
+      <div>
+        <RefreshButton />
+        Something went wrong!
+      </div>
+    );
+  }
+
+  return <div>This has a 50% chance of throwing an error.</div>;
+};
+```
+
+在 error boundary 中使用时，必须搭配 **resetErrorBoundary** 否则将无法从降级渲染中恢复。
+
+定义一个 error fallback 组件，接收 resetErrorBoundary 方法：
+
+```tsx
+// title error-fallback.tsx
+'use client';
+
+import { useEffect } from 'react';
+import { RefreshButton } from './refresh-button';
+
+export function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
+  useEffect(() => {
+    // Log the error to an error reporting service
+    console.error(error);
+  }, [error]);
+
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <RefreshButton onClick={() => resetErrorBoundary()} />
+    </div>
+  );
+}
+```
+
+修改页面代码：
+
+```tsx
+// title page.tsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+import { Banner } from './component/banner';
+import { ErrorComponent } from './component/error-component';
+import { ErrorFallback } from './component/error-fallback';
+
+export default function Page() {
+  return (
+    <div>
+      <Banner />
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ErrorComponent />
+      </ErrorBoundary>
+    </div>
+  );
+}
+```
+
+现在，当服务器组件渲染错误后，你可通过点击按钮，尝试让组件从错误中恢复。
+
+**router.refresh** 虽然能帮助服务器组件从错误中恢复，但它并不是一个完美的方案。因为它会使页面中所有的服务器组件都重新渲染，也就是说，即使之前正常渲染的组件也会随着本次刷新操作而重新数据请求渲染。
+
+虽说有一些缺陷，但目前它是能让服务器组件从错误中恢复的最有效的方案。
