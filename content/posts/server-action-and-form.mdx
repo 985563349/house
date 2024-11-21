@@ -297,14 +297,14 @@ const TodoForm = () => {
       <input
         id="title"
         name="title"
-        defaultValue={(state?.formData?.get('title') ?? '') as string}
+        defaultValue={state?.formData?.get('title')?.toString()}
       />
 
       <label htmlFor="content">Content: </label>
       <textarea
         id="content"
         name="content"
-        defaultValue={(state?.formData?.get('content') ?? '') as string}
+        defaultValue={state?.formData?.get('content')?.toString()}
       />
 
       <button type="submit">Submit</button>
