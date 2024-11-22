@@ -1,0 +1,226 @@
+---
+title: 使用 URL 参数管理组件状态
+topic: content/topics/next-js.mdx
+date: 2024-11-20T16:00:00.000Z
+draft: false
+---
+
+我们在开发具有内容搜索功能的网站时，选择合理的状态管理方案能显著的提升开发效率和用户体验。当你需要保存搜索条件、分页等信息时，**使用 URL 参数来管理组件状态**是一种简单且高效的方案。
+
+本文将探讨使用 useState 管理状态的局限性、URL 参数管理状态的优势，以及如何在 React 中使用 URL 参数管理组件状态。
+
+## 使用 useState 的局限性
+
+useState 是 React 中最简单、常用的状态管理方式，但在开发内容搜索功能时，它会存在以下局限性：
+
+1. 状态难以共享：useState 定义的状态仅当前组件内有效。当需要跨组件共享状态时，通常需要使用状态提升、context 或者全局状态管理库等方案才能实现，增加了实现的复杂度。
+
+2. 不利于 SEO： 在使用服务端渲染的应用中，useState 定义的状态仅存于组件内部，未能与 URL 关联，导致搜索引擎爬虫难以抓取状态对应的页面内容。
+
+3. 限制用户体验：URL 中不存在 useState 定义的状态，导致用户无法将自己的看到的内容通过链接与他人分享或者加入到收藏夹。
+
+## 使用 URL 参数的优势
+
+在我们探讨使用 URL 参数管理状态的优势之前，先来了解一下什么是 URL 参数。
+
+一个完整 URL 通常由以下部分组成：协议、域名、端口、路径、查询参数和锚点。
+
+例如：
+
+```txt
+https://www.example.com:8080/articles?id=123&sort=desc#section2
+```
+
+其中 **?id=123&sort=desc** 的部分就是 URL 参数，它以 **?** 开头，多个参数使用 **&** 分隔。用于为 URL 提供额外的信息，从而实现动态内容的查询和显示。
+
+那么使用它来管理状态具体能带来哪些收益呢?
+
+1. 易于共享：你可以在任意层级的组件中通过浏览器提供的方法访问或修改这些状态。
+
+2. 不易丢失：状态被保存在 URL 中，即使用户不小心刷新页面，状态也能保留，特别适合具有搜索功能的应用场景。
+
+3. 利于 SEO：对于服务端渲染的应用，状态信息直接存储在 URL 中，搜索引擎能够更好抓取到动态的内容，从而提升搜索引擎优化效果。
+
+4. 更好的用户体验：用户可以将包含状态的链接直接分享给他人，或者添加到收藏夹，方便随时访问，提升了操作的便捷性和体验感。
+
+所以，使用 URL 参数管理状态取得的收益是十分明显的，不过在使用的过程中也有几个需要注意的点：
+
+1. 安全问题：在 URL 参数中存储敏感信息可能会带来安全风险，因为用户可以看到这些信息，并且有可能对其进行篡改。
+
+2. 过长的 URL：过多的参数可能导致 URL 过长，从而导致被截断或解析失败的风险。
+
+幸运的是，这些问题是可以轻松规避的，因此可以放心去使用。
+
+## 在 React 中使用 URL 参数管理状态
+
+我们通过具体代码来展示，如何在 React 中使用 URL 参数管理组件状态。
+
+首先，我们定义一个列表组件，它能通过一个名为 **useSearchParams** 的 hook 来获取 URL 中的参数，并根据参数请求相应的数据来渲染内容：
+
+```tsx
+// title movie-list.tsx
+import { useEffect, useState } from 'react';
+import { useSearchParams } from '../hooks/use-search-params';
+
+export const MovieList: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const [movies, setMovies] = useState([]);
+
+  const params = searchParams.toString();
+
+  useEffect(() => {
+    // 使用 params 请求数据
+  }, [params]);
+
+  return (
+    <ul>
+      {movies.map(({ id, url, name }) => (
+        <li key={id}>
+          <img src={url} alt={name} />
+          <span>{name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+接着，我们定义一个筛选组件，它能通过 **useSearchParams** 来修改 URL 参数，从而触发列表组件重新请求数据渲染：
+
+```tsx
+// title genres-panel.tsx
+import { useSearchParams } from '../hooks/use-search-params';
+
+export const GenresPanel: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const genres = searchParams.getAll('genre');
+
+  return (
+    <div>
+      {['Action', 'Comedy', 'Drama'].map((value) => {
+        const checked = genres.includes(value);
+
+        return (
+          <button
+            style={{ background: checked ? 'pink' : '' }}
+            key={value}
+            onClick={() => {
+              const newGenres = checked
+                ? genres.filter((genre) => genre !== value)
+                : [...genres, value];
+
+              setSearchParams(
+                newGenres.map((genre) => ['genre', genre] as [string, string])
+              );
+            }}
+          >
+            {value}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+```
+
+然后，我们在页面组件中引入并使用列表和筛选组件：
+
+```tsx
+// title page.tsx
+import { GenresPanel } from './components/genres-panel';
+import { MovieList } from './components/movie-list';
+
+export function Page() {
+  return (
+    <div>
+      <GenresPanel />
+      <MovieList />
+    </div>
+  );
+}
+```
+
+最后，我们来实现一下这个可以用于读取和操作 URL 参数的 useSearchParams。
+
+如果你在应用中使用了 **react-router-dom** 那么可以直接使用内置的 useSearchParams，效果是完全一样的。
+
+```typescript
+// title use-search-params.ts
+import { useEffect, useRef, useState } from 'react';
+
+type ParamKeyValuePair = [string, string];
+
+type SearchParamsInit =
+  | string
+  | ParamKeyValuePair[]
+  | Record<string, string | string[]>
+  | URLSearchParams;
+
+type SetURLSearchParams = (
+  init: SearchParamsInit | ((prev: URLSearchParams) => SearchParamsInit)
+) => void;
+
+function createSearchParams(init: SearchParamsInit = '') {
+  return new URLSearchParams(
+    typeof init === 'string' ||
+    Array.isArray(init) ||
+    init instanceof URLSearchParams
+      ? init
+      : Object.keys(init).reduce((memo, key) => {
+          const value = init[key];
+          return memo.concat(
+            Array.isArray(value) ? value.map((v) => [key, v]) : [[key, value]]
+          );
+        }, [] as ParamKeyValuePair[])
+  );
+}
+
+export function useSearchParams(
+  defaultInit?: SearchParamsInit
+): [URLSearchParams, SetURLSearchParams] {
+  const defaultSearchParamsRef = useRef(createSearchParams(defaultInit));
+
+  const [searchParams, setSearchParams] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.size ? params : defaultSearchParamsRef.current;
+  });
+
+  useEffect(() => {
+    const onStateChange = () => {
+      // 同步状态
+      setSearchParams(new URLSearchParams(window.location.search));
+    };
+
+    window.addEventListener('statechange', onStateChange);
+
+    return () => {
+      window.removeEventListener('statechange', onStateChange);
+    };
+  }, []);
+
+  const setUrlSearchParams: SetURLSearchParams = (init) => {
+    const newSearchParams = createSearchParams(
+      typeof init === 'function' ? init(searchParams) : init
+    );
+
+    setSearchParams(newSearchParams);
+
+    const url = `${window.location.pathname}?${newSearchParams.toString()}`;
+
+    window.history.replaceState(null, '', url);
+    // 派发自定义事件：statechange
+    window.dispatchEvent(new CustomEvent('statechange'));
+  };
+
+  return [searchParams, setUrlSearchParams];
+}
+```
+
+在代码中我们使用 dispatchEvent 方法派发了一个自定义事件，并在 useEffect 中侦听了这个事件。这么做是因为使用 replaceState 方法修改 URL 的操作无法被侦听到，而我们必须保证多个组件中的 useSearchParams 能在 URL 修改后同步状态，所以就采用了此方案处理。
+
+此时用户进行筛选操作时，状态将会保存在 URL 参数上，即使手动修改 URL 上的参数，状态也依然能同步到组件中。
+
+让我们通过一个案例来看一下最终能实现的效果：
+
+{% codesandbox url="https://codesandbox.io/embed/dcclzh?view=preview" %}
