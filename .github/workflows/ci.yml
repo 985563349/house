@@ -1,0 +1,71 @@
+name: CI
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Generate Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Env File
+        run: |
+          cat << EOF >> .env
+          NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+          NEXT_SECRET_TOKEN=${{ secrets.NEXT_SECRET_TOKEN }}
+          TINA_TOKEN=${{ secrets.TINA_TOKEN }}
+          EOF
+
+      - name: Build Docker Image
+        run: |
+          docker build -t house .
+
+      - name: Save Docker Image
+        run: docker save -o house.tar house:latest
+
+      - name: Export Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: house-docker-image-tar
+          path: house.tar
+
+  deploy:
+    name: Restart Server Docker Container
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Import Docker Image
+        uses: actions/download-artifact@v4
+        with:
+          name: house-docker-image-tar
+          path: house
+
+      - name: Upload Docker Image
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: house/*
+          target: ${{ secrets.IMAGE_DIR_PATH }}
+          strip_components: 1
+
+      - name: Restart Docker Container
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            # load local image
+            docker load -i ${{ secrets.IMAGE_DIR_PATH }}/house.tar
+
+            # restart container
+            docker stop house || true
+            docker rm house || true
+            docker run -d --name house -p 3000:3000 house
+
+            # clean unused images
+            docker image prune -f
