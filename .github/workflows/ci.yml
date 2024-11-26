@@ -34,7 +34,7 @@ jobs:
         with:
           context: .
           tags: house:latest
-          outputs: type=docker,dest=house.tar.gz,compression=gzip,compression-level=9
+          outputs: type=docker,dest=house.tar
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: house-docker-image
-          path: house.tar.gz
+          path: house.tar
           retention-days: 1
 
   deploy:
@@ -55,13 +55,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Import Docker Image
+        uses: actions/download-artifact@v4
+        with:
+          name: house-docker-image
+          path: images
+
       - name: Upload Docker Image
-        uses: wangyucode/sftp-upload-action@v2.0.3
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
-          localDir: '.'
-          remoteDir: ${{ secrets.IMAGE_DIR_PATH }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: images/*
+          target: ${{ secrets.IMAGE_DIR_PATH }}
+          strip_components: 1
 
       - name: Restart Docker Container
         uses: appleboy/ssh-action@v1.2.0
@@ -71,7 +79,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # load local image
-            gunzip -c ${{ secrets.IMAGE_DIR_PATH }}/house.tar.gz | docker load
+            docker load -i ${{ secrets.IMAGE_DIR_PATH }}/house.tar
 
             # restart container
             docker stop house || true
