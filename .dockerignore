@@ -10,5 +10,6 @@ Dockerfile
 
 # Editor directories and files
 .vscode
+.github
 .git
 .DS_Store
