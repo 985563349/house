@@ -10,16 +10,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.4.8",
     "bright": "^0.8.5",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^11.11.11",
     "next": "15.0.1",
     "next-themes": "^0.4.3",
     "react": "^19.0.0-rc-69d4b800-20241021",
     "react-dom": "^19.0.0-rc-69d4b800-20241021",
     "react-icons": "^5.3.0",
     "seti-icons": "^0.0.4",
+    "tailwind-merge": "^2.5.5",
     "tinacms": "^2.4.0"
   },
   "devDependencies": {

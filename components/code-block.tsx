@@ -15,9 +15,7 @@ const highlight: Extension = {
   name: 'highlight',
   MultilineAnnotation: ({ children }) => {
     return (
-      <span className="block border-l-2 border-blue-500 bg-black bg-opacity-5 dark:bg-opacity-50">
-        {children}
-      </span>
+      <span className="block border-l-2 border-blue-500 bg-black bg-opacity-5 dark:bg-opacity-50">{children}</span>
     );
   },
 };
@@ -58,10 +56,7 @@ const fileIcons: Extension = {
 
     return (
       <div className="flex items-center h-[1.5em] -ml-[8px]">
-        <span
-          className="inline-block w-[2em] h-[2em] -my-[0.5em]"
-          dangerouslySetInnerHTML={{ __html }}
-        />
+        <span className="inline-block w-[2em] h-[2em] -my-[0.5em]" dangerouslySetInnerHTML={{ __html }} />
         {title}
       </div>
     );
@@ -95,8 +90,7 @@ const focus: Extension = {
         if (r.fromLineNumber < fromLineNumber)
           return [{ fromLineNumber: r.fromLineNumber, toLineNumber: fromLineNumber - 1 }];
 
-        if (r.toLineNumber > toLineNumber)
-          return [{ fromLineNumber: toLineNumber + 1, toLineNumber: r.toLineNumber }];
+        if (r.toLineNumber > toLineNumber) return [{ fromLineNumber: toLineNumber + 1, toLineNumber: r.toLineNumber }];
 
         return [];
       });
@@ -132,4 +126,4 @@ const CodeBlock: React.FC<CodeBlockProps> = (props) => {
   );
 };
 
-export { CodeBlock };
+export default CodeBlock;

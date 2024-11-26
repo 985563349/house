@@ -28,4 +28,4 @@ const GitHubGistEmbed: React.FC<GitHubGistEmbedProps> = (props) => {
   return <iframe ref={iframeRef} id={`gist-${props.id}`} data-id={props.id} className="w-full" />;
 };
 
-export { GitHubGistEmbed };
+export default GitHubGistEmbed;

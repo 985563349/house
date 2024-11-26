@@ -2,49 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  .light {
-    --color-primary-blue: 138 230 251;
-    --color-text-muted: 100 116 139;
-    --color-text-link: 6 182 212;
-  }
-
-  .dark {
-    --color-primary-blue: 59 130 246;
-    --color-text-muted: 212 212 212;
-    --color-text-link: 96 165 250;
-  }
+html {
+  color-scheme: light;
 }
 
-@layer components {
-  .animated-link {
-    position: relative;
-    box-decoration-break: clone;
-    text-decoration: none;
+html.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  @apply size-full;
+}
+
+body {
+  @apply font-sans antialiased;
+  @apply flex flex-col;
+  @apply bg-stone-100 dark:bg-stone-900;
+  @apply text-black/50 dark:text-white/75;
+}
+
+header {
+  @apply fixed top-0 left-0 right-0 z-50 py-5;
+  @apply bg-stone-100/75 dark:bg-stone-900/25;
+  @apply backdrop-blur-sm saturate-200;
+}
+
+main {
+  @apply flex-1 py-32;
+}
+
+footer {
+  @apply py-5 text-sm;
+}
+
+article {
+  @apply max-w-full prose dark:prose-invert prose-img:mx-auto prose-img:my-auto;
+  @apply prose-headings:font-semibold prose-p:font-serif;
+  @apply prose-headings:text-black prose-headings:dark:text-white;
+}
+
+@layer utilities {
+  article a {
+    @apply font-sans text-current underline underline-offset-2;
+    @apply decoration-black/15 dark:decoration-white/30;
+    @apply transition-colors duration-300 ease-in-out;
   }
 
-  .animated-link:hover:after {
-    transform: translateZ(0) scale(1);
-  }
-
-  .animated-link:after {
-    left: 0;
-    right: 0;
-    bottom: -3px;
-    content: '';
-    height: 2px;
-    position: absolute;
-    transform: translateZ(0) scaleX(0);
-    transform-origin: left center;
-    transition: all 0.15s ease-in-out;
-    background-image: linear-gradient(
-      to right,
-      theme('colors.text.link'),
-      theme('colors.text.link')
-    );
-  }
-
-  .animated-link.active:after {
-    transform: translateZ(0) scale(1);
+  article a:hover {
+    @apply text-black dark:text-white;
+    @apply decoration-black/25 dark:decoration-white/50;
   }
 }

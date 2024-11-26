@@ -1,30 +1,30 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
+import Header from '@/components/header';
+import Footer from '@/components/footer';
 
-import { Providers } from './providers';
+import Providers from './providers';
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap' });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
     template: '%s - Jee',
-    default: 'Jee 的 Web 开发日志',
+    default: 'Jee 的数字花园',
   },
-  description: "Jee's portfolio",
+  description: "Jee's digital garden",
   authors: [{ name: 'Jee' }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${spaceGrotesk.className} mx-auto max-w-5xl text-lg`}>
+      <body className={`${inter.className}`}>
         <Providers>
-          <Navbar />
-          <main className="px-6">{children}</main>
+          <Header />
+          <main>{children}</main>
           <Footer />
         </Providers>
       </body>

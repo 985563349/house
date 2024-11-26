@@ -1,19 +1,13 @@
-import { cn } from '@nextui-org/react';
 import { RiLinksFill } from 'react-icons/ri';
+
+import { cn } from '@/lib/utils';
 
 export type HeadingProps = React.HTMLAttributes<HTMLHeadingElement> & {
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h5';
   anchor?: boolean;
 };
 
-const Heading: React.FC<HeadingProps> = ({
-  id,
-  className,
-  variant = 'h1',
-  anchor = false,
-  children,
-  ...props
-}) => {
+const Heading: React.FC<HeadingProps> = ({ id, className, variant = 'h1', anchor = false, children, ...props }) => {
   const Variant = variant;
   const showAnchor = anchor && id;
 
@@ -29,4 +23,4 @@ const Heading: React.FC<HeadingProps> = ({
   );
 };
 
-export { Heading };
+export default Heading;

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { format, isSameYear } from 'date-fns';
 
+import ArrowCard from '@/components/arrow-card';
 import client from '@/tina/__generated__/client';
+import type { PostConnectionQuery } from '@/tina/__generated__/types';
 
 export const revalidate = 3600; // invalidate every hour
 
 export const metadata: Metadata = {
-  title: '博客',
+  title: '文章',
 };
 
 export default async function Posts() {
@@ -17,40 +18,40 @@ export default async function Posts() {
     filter: { draft: { eq: false } },
   });
 
+  const posts = data.postConnection.edges?.reduce((acc, post) => {
+    const year = new Date(post?.node?.date!).getFullYear().toString();
+
+    acc[year] ??= [];
+    acc[year]?.push(post);
+
+    return acc;
+  }, {} as Record<string, PostConnectionQuery['postConnection']['edges']>);
+
+  const years = Object.keys(posts ?? {}).sort((a, b) => parseInt(b) - parseInt(a));
+
   return (
-    <div>
-      <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
-        {data.postConnection.edges?.map((post) => {
-          const date = new Date(post?.node?.date!);
+    <div className="mx-auto max-w-screen-md px-5">
+      <div className="space-y-10">
+        <div className="font-semibold text-black dark:text-white">文章</div>
 
-          return (
-            <li key={post?.node?.id}>
-              <div className="flex flex-col sm:flex-row sm:gap-2">
-                <div className="flex-1">
-                  <Link
-                    href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}
-                    className="transition-[background-size] duration-300 
-                      bg-gradient-to-r bg-left-bottom bg-no-repeat
-                      bg-[length:0%_55%] hover:bg-[length:100%_55%] dark:bg-[length:0%_2px] hover:dark:bg-[length:100%_2px]
-                      from-primary-blue to-primary-blue dark:from-primary-blue dark:to-primary-blue"
-                  >
-                    {post?.node?.title}
-                  </Link>
-                </div>
+        <div className="space-y-4">
+          {years.map((year) => (
+            <section className="space-y-4" key={year}>
+              <div className="font-semibold text-black dark:text-white">{year}</div>
 
-                <div className="pt-1 italic text-sm text-text-muted">
-                  <time dateTime={post?.node?.date}>
-                    {format(
-                      date,
-                      isSameYear(new Date(), date) ? 'MM-dd' : 'yyyy-MM-dd'
-                    )}
-                  </time>
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+              <ul className="flex flex-col gap-4">
+                {posts?.[year]?.map((post) => (
+                  <li key={post?.node?.id}>
+                    <Link href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}>
+                      <ArrowCard title={post?.node?.title} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
