@@ -59,8 +59,7 @@ jobs:
         uses: wangyucode/sftp-upload-action@v2.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
           localDir: '.'
           remoteDir: ${{ secrets.IMAGE_DIR_PATH }}
 
@@ -69,7 +68,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # load local image
             gunzip -c ${{ secrets.IMAGE_DIR_PATH }}/house.tar.gz | docker load
