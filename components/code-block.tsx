@@ -115,8 +115,8 @@ const CodeBlock: React.FC<CodeBlockProps> = (props) => {
       style={{ borderRadius: '0.375rem' }}
       lang={props.lang}
       theme={{
-        dark: 'material-palenight',
-        light: 'material-lighter',
+        dark: 'github-dark',
+        light: 'github-light',
         lightSelector: 'html.light',
       }}
       extensions={[title, highlight, fileIcons, focus]}

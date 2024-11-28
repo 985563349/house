@@ -1,22 +1,28 @@
-import Link from '@/components/link';
+import Link from 'next/link';
+
+import ThemeToggle from '@/components/theme-toggle';
 
 const Header: React.FC = () => {
   return (
-    <header>
+    <header className="py-5">
       <div className="mx-auto max-w-screen-md px-5">
-        <div className="flex flex-wrap gap-y-2 justify-between">
+        <div className="flex items-center justify-between">
           <Link href="/">
             <span className="font-semibold">Jee</span>
           </Link>
-          <nav className="flex gap-1">
-            <Link href="/posts" underline>
-              文章
-            </Link>
-            <span>/</span>
-            <Link href="/about" underline>
-              关于我
-            </Link>
-          </nav>
+
+          <div className="flex items-center gap-4">
+            <nav className="space-x-4">
+              <Link href="/posts" className="link">
+                文章
+              </Link>
+              <Link href="/about" className="link">
+                关于我
+              </Link>
+            </nav>
+
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>
