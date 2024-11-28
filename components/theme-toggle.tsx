@@ -1,28 +1,41 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { RiMoonLine, RiSunLine } from 'react-icons/ri';
 
 const ThemeToggle: React.FC = () => {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <div className="inline-flex flex-wrap gap-1 items-center">
-      <button
-        aria-label="Light theme"
-        className="group flex items-center justify-center size-8 text-xl"
-        onClick={() => setTheme('light')}
-      >
-        <RiSunLine className="group-hover:text-black group-hover:dark:text-white transition-colors duration-300 ease-in-out" />
-      </button>
-
-      <button
-        aria-label="Dark theme"
-        className="group flex items-center justify-center size-8 text-xl"
-        onClick={() => setTheme('dark')}
-      >
-        <RiMoonLine className="group-hover:text-black group-hover:dark:text-white transition-colors duration-300 ease-in-out" />
-      </button>
+    <div className="size-10">
+      {mounted ? (
+        <>
+          {theme === 'light' ? (
+            <button
+              aria-label="Light theme"
+              className="flex items-center justify-center rounded-full size-full text-xl hover:bg-black/5 transition-colors duration-300 ease-in-out"
+              onClick={() => setTheme('dark')}
+            >
+              <RiSunLine />
+            </button>
+          ) : (
+            <button
+              aria-label="Dark theme"
+              className="flex items-center justify-center rounded-full size-full text-xl hover:bg-white/10 transition-colors duration-300 ease-in-out"
+              onClick={() => setTheme('light')}
+            >
+              <RiMoonLine />
+            </button>
+          )}
+        </>
+      ) : null}
     </div>
   );
 };

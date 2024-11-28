@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { cn } from '@/lib/utils';
 
 import Providers from './providers';
 import './globals.css';
@@ -20,11 +21,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className}`}>
+    <html lang="en" suppressHydrationWarning className="size-full">
+      <body
+        className={cn(
+          'flex flex-col antialiased size-full text-gray-950 dark:text-gray-100 bg-white dark:bg-gray-950',
+          inter.className
+        )}
+      >
         <Providers>
           <Header />
-          <main>{children}</main>
+          <main className="flex-1 py-10">{children}</main>
           <Footer />
         </Providers>
       </body>

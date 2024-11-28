@@ -5,7 +5,7 @@ export type ArrowCardProps = {
 
 const ArrowCard: React.FC<ArrowCardProps> = ({ title, description }) => {
   return (
-    <div className="relative group flex flex-nowrap py-3 px-4 pr-10 rounded-lg border border-black/15 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-colors duration-300 ease-in-out">
+    <div className="relative group flex flex-nowrap p-4 pr-10 rounded-lg border border-black/15 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-[background-color] duration-300 ease-in-out">
       <div className="flex flex-col flex-1 truncate">
         <p className="font-semibold">{title}</p>
         <p className="text-sm">{description}</p>
