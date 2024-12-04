@@ -1,0 +1,439 @@
+---
+title: 深入服务端渲染
+topic: content/topics/react.mdx
+date: 2024-12-02T16:00:00.000Z
+draft: false
+---
+
+如果你还不了解服务端渲染，那么我先做个简单的介绍。
+
+早期的 Web 应用，页面的内容主要是在服务端上执行代码生成。例如，在 PHP 中，服务端可以生成内容完整的 HTML 文件，再返回给客户端。
+
+```php
+<?php
+// 模拟动态数据
+$hobby = ['🎤', '💃', '🤟', '🏀'];
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SSR</title>
+  </head>
+  <body>
+    <div id="root">
+      <ul>
+        <?php foreach ($hobby as $item): ?>
+          <li>
+            <?php echo htmlspecialchars($item); ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <script src="/main.js" async></script>
+  </body>
+</html>
+```
+
+客户端接收到的 HTML 内容，大致如下：
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SSR</title>
+  </head>
+  <body>
+    <div id="root">
+      <ul>
+        <li>🎤</li>
+        <li>💃</li>
+        <li>🤟</li>
+        <li>🏀</li>
+      </ul>
+    </div>
+    <script src="/main.js" async></script>
+  </body>
+</html>
+```
+
+由于接收到的是页面内容完整的文件，客户端只需要解析完 HTML，就能将内容渲染出来。
+
+这种主要依靠在服务端上执行代码生成页面内容的方式，我们称为服务端渲染（SSR）。
+
+而当前 Web 应用采用更多的渲染方式是客户端渲染（CSR），页面内容主要依靠在客户端上执行代码生成，客户端从服务端接收到的只是一个空的 HTML 文件。内容大致如下：
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CSR</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/main.js"></script>
+  </body>
+</html>
+```
+
+接收到 HTML 文件后，客户端需要等到加载执行完 JavaScript（通常这会是一个较大的文件），内容才能被渲染出来。
+
+我们可以通过一张动态图来理解这一过程：
+
+![csr](/csr.awebp 'csr')
+
+我们可以看到，客户端渲染由于需要依赖 JavaScript 生成页面内容，因此在首屏渲染时可能会遇到较长的白屏时间，并且由于返回的 HTML 内容为空，对 SEO 也不友好。
+
+而相比之下，服务端渲染返回的是内容完整的 HTML，能够提供更快的首屏渲染速度和更好的 SEO 优化。但是，当前开发 Web 应用仍然更倾向于使用客户端渲染，这是为什么？
+
+我们来看一下服务端渲染与客户端渲染各自存在的优点与缺点。
+
+### 服务端渲染
+
+#### 优点
+
+- **首屏渲染快：** 服务端能生成页面内容完整的 HTML，客户端可以直接加载渲染，用户能更快看到内容。
+
+- **SEO 友好：** 页面内容完整的 HTML，搜索引擎可以更容易地抓取和索引内容。
+
+- **低网络带宽设备的性能好：** 服务端渲染可以减轻网络带宽低、处理能力弱的设备的渲染负担，缩短加载和显示内容的时间。
+
+#### 缺点
+
+- **服务器压力大：** 服务端需要接收请求生成相应的 HTML 页面内容，因此在高并发的情况下，会导致服务器负载过重，影响响应速度和稳定性。
+
+- **交互性差：** 不能动态更新页面内容，切换页面时往往需要重新加载整个页面的资源，导致页面加载慢，影响用户的交互体验，并且难以实现流畅的切换效果。
+
+- **前后端不分离：** 服务端要同时处理前端和后端的逻辑，并且难以分离，后期维护的难度较高。
+
+### 客户端渲染
+
+#### 优点
+
+- **服务器压力小：** 生成页面内容交给了客户端处理，服务端只负责提供数据，减轻了服务器的压力。
+
+- **交互性强：** 能动态的更新页面内容，页面切换时不用重新加载整个页面的资源，加载速度快，而且容易实现流畅的切换效果。
+
+- **前后端分离：** 能做到前后端分离，降低了后期维护的难度。
+
+#### 缺点
+
+- **首屏渲染慢：** 页面内容需要客户端加载执行完 JavaScript 后才能生成，因此首屏渲染速度较慢，尤其在网络环境差的情况下。
+
+- **SEO 不友好：** HTML 内容是在客户端生成的，低级的搜索引擎爬虫难以抓取页面内容。
+
+- **JavaScript 依赖：** 用户禁用了 JavaScript 或者加载失败，页面就无法正常显示。
+
+服务端渲染由于存在交互性差、维护复杂度高的问题难以解决，而客户端渲染的可交互性更强、维护复杂度更低，再加上 React 等数据驱动框架的流行，因此客户端渲染逐渐成为了主流。
+
+但是，服务端渲染的优点也是显而易见的，那么有没有办法同时结合两者的优点，规避两者的缺点呢？
+
+答案是：有。
+
+这就是接下来我们要介绍的：同构渲染。
+
+### 同构渲染
+
+要理解同构渲染，关键在于理解同构的含义。
+
+在软件开发，特别是 Web 开发中，同构表示同一套代码既在服务端运行，也在客户端运行，两者相互配合共同实现功能，并且在不同环境中能保持一致的行为和结果。
+
+同构渲染，就是将服务端渲染与客户端渲染结合的一种方式。其核心思想是：服务端负责生成页面内容，客户端负责处理页面交互。
+
+因此，在同构渲染中：
+
+1.  **首次请求：** 由服务端渲染生成页面内容完整的 HTML，再返回给客户端，以加快首屏渲染速度并提高 SEO 效果。
+
+2.  **后续交互：** 由客户端接管，通过 JavaScript 管理后续的页面更新、事件响应等交互操作。
+
+简单点理解就是，同构渲染**只有首屏是由服务端渲染，后续页面都是由客户端渲染**。这样既可以保证首屏渲染速度，同时又保证了交互性。
+
+那么问题来了，服务端返回首屏后，客户端要如何接管后续的页面渲染呢？
+
+这里就要引入一个新的概念：**水合（Hydration）**。
+
+如何理解水合？
+
+你可以想一下，服务器返回的 HTML 内容像是一个脱水的三体人（服务端在做渲染时，真的会有脱水这个步骤），没有生机不具备交互的能力。浏览器接收到后，通过使用 JavaScript 为其浸泡，使其恢复生机和交互的能力，而这个恢复的过程就叫水合。
+
+水合完成后，客户端的 JavaScript 就完全接管了页面，可以进行后续的渲染和交互了。
+
+理解了水合后，我们再来看一下同构渲染的具体工作流程。
+
+#### 同构渲染的工作流程
+
+在客户端与服务端进行同构渲染时，通常都会经历以下流程：
+
+1. 客户端访问 URL，发送请求到对应的服务器。
+
+2. 服务端接收到请求后，根据请求的 URL 匹配相应的渲染处理函数和 HTML 页面。
+
+3. 服务端从数据库或其他外部 API 获取必要的数据，用于生成 HTML 页面内容。
+
+4. 服务端生成好 HTML 页面，并将其返回给客户端。
+
+5. 客户端接收到 HTML 页面后，解析 HTML，将页面内容渲染在客户端上。
+
+6. 客户端加载执行 JavaScript，水合 HTML 页面。
+
+7. 客户端接管页面，进行后续的交互。
+
+我们可以通过一张动态图来理解这一过程：
+
+![ssr](/ssr.awebp 'ssr')
+
+我们可以看到，在初次请求完成后，客户端就已经能渲染出页面内容，不过此时的页面还不能进行交互，等到客户端加载执行 JavaScript 完成水合后，就能进行交互了。
+
+#### 同构渲染与服务端渲染
+
+如今我们在谈论 Web 应用的服务端渲染时，一般都是指同构渲染。而早期的服务端渲染，我们称为传统服务端渲染。
+
+与传统服务端渲染不同的是，同构渲染的服务端一般只负责生成 HTML 页面内容，逻辑部分通常会交给其他服务去处理。
+
+#### 同构渲染存在的问题
+
+虽然同构渲染结合了服务端与客户端渲染的优点，同时也规避了一些缺点，但自身依然存在一些需要解决的问题：
+
+- **服务器压力大：** 服务端即使只负责生成 HTML 页面内容，但在高并发的情况下，依然会导致服务器负载过重，影响响应速度和稳定性。
+
+- **交互延迟：** 虽然能更快的看到页面内容，但需要等待客户端完成水合后才能进行交互，因此交互上可能存在延迟。
+
+- **学习成本高：** 同构渲染需要开发人员同时掌握前端与后端的知识，学习成本相对较高。
+
+理解了同构渲染后，接下来我们将通过代码来实现一个同构渲染，更加深入的去理解它背后的工作流程。
+
+### 实现同构渲染
+
+你可以阅读以下内容了解同构渲染的实现，也可以直接跳到[这里](https://github.com/985563349/vite-ssr/tree/main)查看完整代码。
+
+传统服务端渲染通常会使用 PHP 或者 Java 等语言进行开发，而同构渲染我们一般会使用 Node.JS 来开发服务端的部分。
+
+客户端部分我们将使用 React，并通过 Vite 来编译 JSX 语法。最后，包管理器选择使用 pnpm 进行依赖管理。
+
+我们先创建一个项目目录，并初始化项目：
+
+```bash
+mkdir vite-ssr
+cd vite-ssr
+pnpm init
+```
+
+安装项目所需要的依赖：
+
+```bash
+pnpm add react react-dom express
+
+pnpm add vite @vitejs/plugin-react -D
+```
+
+接着在项目根目录中创建一个 index.html 文件，并添加以下代码：
+
+```html
+<!-- title index.html-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite SSR</title>
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+  </body>
+</html>
+```
+
+创建一个 server.js 文件：
+
+```js
+// title server.js
+import fs from 'node:fs/promises';
+import express from 'express';
+
+const app = express();
+
+app.use('*', async (req, res) => {
+  const html = await fs.readFile('./index.html', 'utf-8');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+
+app.listen(3001, () => {
+  console.log('Server is running on http://localhost:3001');
+});
+```
+
+接着修改一下 package.json 文件，添加一个 dev 命令：
+
+```json
+// title package.json
+{
+  "name": "vite-ssr",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "node server"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.3"
+  }
+}
+```
+
+注意，一定要将 type 设置为 module，否则在 node 环境中无法使用 import 语法。
+
+现在，你可以通过 **pnpm dev** 来启动项目，访问 **http://localhost:3000** 来查看效果。不过你现在能看到应该是一个空白页面，因为我们还没有在 HTML 中添加的任何内容。
+
+接下来我们创建一个 React 组件并在服务端渲染它。
+
+首先，在项目根目录中创建一个 vite.config.js 文件，并添加以下代码：
+
+```js
+// title vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+```
+
+接着创建一个 src 目录，并在目录中创建一个 App.jsx 文件：
+
+```jsx
+// title src/App.jsx
+import { useState } from 'react';
+
+export default function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>count: {count}</button>
+    </div>
+  );
+}
+```
+
+和一个 entry-server.jsx 文件，这个文件是在服务端做渲染时的入口：
+
+```jsx
+// title src/entry-server.jsx
+import { renderToString } from 'react-dom/server';
+import App from './App';
+
+export async function render() {
+  const html = renderToString(<App />);
+
+  return { html };
+}
+```
+
+注意，这里我们使用 **renderToString** 将 React 组件渲染为字符串，这是因为服务端渲染时，React 组件需要转换为字符串，才能插入到 HTML 中，而这个将 React 组件转换为字符串的过程，就叫**脱水（Dehydration）**。
+
+接着，修改一下 server.js 文件，我们以中间件的方式来使用 Vite 加载并执行 entry-server.jsx 文件：
+
+```js
+// title server.js
+// highlight(3,5)
+// highlight(9,10,11,12,13,15)
+// highlight(18,19,21,22)
+import fs from 'node:fs/promises';
+import express from 'express';
+import { createServer } from 'vite';
+
+const base = process.env.BASE || '/';
+
+const app = express();
+
+const vite = await createServer({
+  server: { middlewareMode: true },
+  appType: 'custom',
+  base,
+});
+
+app.use(vite.middlewares);
+
+app.use('*', async (req, res) => {
+  const template = await fs.readFile('./index.html', 'utf-8');
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const renderer = await render();
+  const html = template.replace('<!--app-html-->', renderer.html ?? '');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
+});
+```
+
+重启一下项目，现在你应该能在页面上看到计数的按钮，同时返回的 HTML 中也包含了相应的内容。
+
+不过此时点击按钮，数字并不会增加。这是因为我们目前只在服务端完成了渲染，客户端还没有进行水合。
+
+接下来，我们在客户端完成水合实现交互。
+
+首先，在 src 目录中创建一个 entry-client.jsx 文件，这个文件是客户端在做渲染时的入口：
+
+```jsx
+// title src/entry-client.jsx
+import { hydrateRoot } from 'react-dom/client';
+import App from './App';
+
+hydrateRoot(document.getElementById('app'), <App />);
+```
+
+注意，这里我们使用 **hydrateRoot** 在客户端重新渲染了 App 组件，这个过程就是水合。
+
+水合的过程中需要将 Document 中已有的 DOM 和 React 虚拟 DOM 相关联，这就要求两者的 DOM 结构必须严格保持一致。
+
+接着，我们在 index.html 中添加一个 script 标签，加载 entry-client.jsx 文件：
+
+```html
+<!-- title index.html -->
+<!-- highlight(9) -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite SSR</title>
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+    <script src="/src/entry-client.jsx" type="module"></script>
+  </body>
+</html>
+```
+
+然后，修改一下 server.js 文件，让客户端请求的 entry-client.jsx 文件能够被 Vite 处理：
+
+```js
+// title server.js
+// highlight(4,5)
+app.use('*', async (req, res) => {
+  const url = req.originalUrl.replace(base, '/');
+
+  let template = await fs.readFile('./index.html', 'utf-8');
+  template = await vite.transformIndexHtml(url, template);
+
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const renderer = await render();
+  const html = template.replace('<!--app-html-->', renderer.html ?? '');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+```
+
+最后，重启一下项目，再次点击页面上的按钮，计数会正常增加。
+
+至此，我们已经完成了一个基本的同构渲染。
+
+### 实现路由

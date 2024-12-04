@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  console.log('layout render');
   return (
     <html lang="en" suppressHydrationWarning className="size-full">
       <body

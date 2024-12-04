@@ -1,6 +1,6 @@
 ---
 title: 如何处理服务器组件错误
-topic: ''
+topic: content/topics/next-js.mdx
 date: 2024-11-19T16:00:00.000Z
 draft: false
 ---
@@ -117,9 +117,7 @@ NextJS 提供了一个方法能重新渲染服务器组件帮助其从错误中�
 import { startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
-export const RefreshButton: React.FC<{ onClick?: () => void }> = ({
-  onClick,
-}) => {
+export const RefreshButton: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   const router = useRouter();
 
   return (
@@ -176,13 +174,7 @@ export const ErrorComponent: React.FC = async () => {
 import { useEffect } from 'react';
 import { RefreshButton } from './refresh-button';
 
-export function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
+export function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error);
