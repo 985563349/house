@@ -1,0 +1,775 @@
+---
+title: 深入服务端渲染（下）
+topic: content/topics/react.mdx
+date: 2024-12-11T16:00:00.000Z
+draft: false
+---
+
+你可以阅读以下内容了解同构渲染的实现，也可以直接跳到[这里](https://github.com/985563349/vite-ssr/tree/main)查看完整代码。
+
+### 渲染
+
+传统服务端渲染通常会使用 PHP 或者 Java 等语言进行开发，而同构渲染我们一般会使用 Node.JS 来开发服务端的部分。
+
+客户端渲染的部分我们将使用 React，并通过 Vite 来编译 JSX 语法。最后，包管理器我们使用 pnpm 。
+
+首先，创建一个项目目录，并初始化 pnpm：
+
+```bash
+mkdir vite-ssr
+cd vite-ssr
+pnpm init
+```
+
+安装项目所需要的依赖：
+
+```bash
+pnpm add react react-dom express
+
+pnpm add vite @vitejs/plugin-react -D
+```
+
+接着，在项目根目录中创建一个 index.html 文件，并添加以下代码：
+
+```html
+<!-- title index.html-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite SSR</title>
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+  </body>
+</html>
+```
+
+注意，我们在 HTML 中添加了一个注释节点，之后我们会在服务端渲染时使用页面内容替换它。
+
+接着，创建一个 server.js 文件：
+
+```js
+// title server.js
+import fs from 'node:fs/promises';
+import express from 'express';
+
+const app = express();
+
+app.use('*', async (req, res) => {
+  const html = await fs.readFile('./index.html', 'utf-8');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
+});
+```
+
+我们使用 express 创建了一个 HTTP 服务，并监听 3000 端口。
+
+接着，我们修改一下 package.json 文件，并添加一个 dev 命令：
+
+```json
+// title package.json
+{
+  "name": "vite-ssr",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "node server"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.3"
+  }
+}
+```
+
+注意，一定要将 type 设置为 module，否则在 node 环境中将无法使用 import 语法。
+
+现在，你可以通过 pnpm dev 启动项目，访问 [http://localhost:3000](http://localhost:3000) 来查看效果。目前页面是空白的，因为我们还没有添加任何内容。接下来，我们将创建一个 React 组件并在服务端渲染它，很快你就能看到页面内容了。
+
+首先，在项目根目录中创建一个 vite.config.js 文件，并添加以下代码：
+
+```js
+// title vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+```
+
+接着创建一个 src 目录，并在目录中创建一个 App.jsx 文件：
+
+```jsx
+// title src/App.jsx
+import { useState } from 'react';
+
+export default function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>count: {count}</button>
+    </div>
+  );
+}
+```
+
+和一个 entry-server.jsx 文件，这个文件是服务端渲染的入口文件：
+
+```jsx
+// title src/entry-server.jsx
+import { renderToString } from 'react-dom/server';
+
+import App from './App';
+
+export async function render() {
+  const html = renderToString(<App />);
+
+  return { html };
+}
+```
+
+注意，这里我们使用 **renderToString** 将 React 组件渲染成了字符串，这是因为在做服务端渲染时，React 组件需要转换为字符串，才能插入到 HTML 中，而这个将 React 组件转换为 HTML 字符串的过程，就叫**脱水（Dehydration）**。
+
+接着，修改一下 server.js 文件。我们以中间件的方式来使用 Vite，通过它来加载执行 entry-server.jsx 文件：
+
+```js
+// title server.js
+// highlight(3,5,9,10,11,12,13,15,18,19,21,22)
+import fs from 'node:fs/promises';
+import express from 'express';
+import { createServer } from 'vite';
+
+const base = process.env.BASE || '/';
+
+const app = express();
+
+const vite = await createServer({
+  server: { middlewareMode: true },
+  appType: 'custom',
+  base,
+});
+
+app.use(vite.middlewares);
+
+app.use('*', async (req, res) => {
+  const template = await fs.readFile('./index.html', 'utf-8');
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const renderer = await render();
+  const html = template.replace('<!--app-html-->', renderer.html ?? '');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
+});
+```
+
+注意，我们使用组件渲染所生成的字符串替换了 HTML 中的注释节点。
+
+现在，重启一下项目，你应该能在页面上看到计数的按钮，同时返回的 HTML 中也包含了相应的内容。不过此时点击按钮，计数并不会增加。这是因为我们目前只在服务端完成了渲染，客户端还没有进行水合。
+
+接下来，我们在客户端完成水合，实现交互。
+
+### 水合
+
+首先，在 src 目录中创建一个 entry-client.jsx 文件，这个文件是客户端渲染的入口文件：
+
+```jsx
+// title src/entry-client.jsx
+import { hydrateRoot } from 'react-dom/client';
+
+import App from './App';
+
+hydrateRoot(document.getElementById('app'), <App />);
+```
+
+注意，这里我们使用 **hydrateRoot** 在客户端重新渲染了 App 组件，这个过程其实就是水合。
+
+水合的过程中需要将 Document 中已有的 DOM 和 React 虚拟 DOM 相关联，这就要求两者的结构必须严格保持一致。
+
+接着，我们在 index.html 中添加一个 script 标签，加载 entry-client.jsx 文件：
+
+```html
+<!-- title index.html -->
+<!-- highlight(9) -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite SSR</title>
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+    <script src="/src/entry-client.jsx" type="module"></script>
+  </body>
+</html>
+```
+
+然后，修改一下 server.js 文件，让客户端请求的 entry-client.jsx 文件能够被 Vite 处理：
+
+```js
+// title server.js
+// highlight(4,5)
+app.use('*', async (req, res) => {
+  const url = req.originalUrl.replace(base, '/');
+
+  let template = await fs.readFile('./index.html', 'utf-8');
+  template = await vite.transformIndexHtml(url, template);
+
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const renderer = await render();
+  const html = template.replace('<!--app-html-->', renderer.html ?? '');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+```
+
+最后，重启一下项目，再次点击页面上的按钮，计数将会正常增加。
+
+至此，我们已经完成了一个基本的同构渲染。下一步，我们来实现一下路由。
+
+### 路由
+
+在本节中，我们将基于 react-router-dom 实现一个文件系统的路由。
+
+首先，安装一下依赖：
+
+```bash
+pnpm add react-router-dom
+```
+
+接着，在 src 目录中创建一个 next.jsx 文件，并写入以下代码：
+
+```jsx
+// title src/next.jsx
+import { BrowserRouter, Route, Routes, StaticRouter } from 'react-router-dom';
+
+export function getPageRoutes(importMap) {
+  return Object.keys(importMap)
+    .sort((a, b) => (a > b ? -1 : 1))
+    .map((path) => ({
+      path: path
+        .slice(10, -4)
+        .replace(/\[(\w+)\]/, (_, m) => `:${m}`)
+        .replace(/\/page$/, '/'),
+      component: importMap[path].default,
+    }));
+}
+
+export function createRouter({ routes, url }) {
+  const Router = import.meta.env.SSR ? StaticRouter : BrowserRouter;
+
+  return (
+    <Router location={url}>
+      <Routes>
+        {routes.map((route) => {
+          const { path, component: Component } = route;
+          return <Route key={path} path={path} element={<Component />} />;
+        })}
+      </Routes>
+    </Router>
+  );
+}
+```
+
+createRouter 函数中我们使用环境变量 **import.meta.env.SSR** 判断当前是否为服务端渲染，如果是服务端渲染，则使用 **StaticRouter** 来创建路由，如果是客户端渲染，则使用 **BrowserRouter** 来创建路由。
+
+接着，创建一个 routes.js 文件：
+
+```js
+// title src/routes.js
+import { getPageRoutes } from './next';
+
+export default getPageRoutes(import.meta.glob('/src/pages/**/page.jsx', { eager: true }));
+```
+
+我们使用 Vite 提供的 **import.meta.glob** 来批量导入 src/pages 目录下所有名为 page.jsx 的文件，并通过 getPageRoutes 函数生成相应的路由配置表。
+
+假设你有目录结构：
+
+```
+src/pages/
+├── page.jsx
+├── about/
+│   └── page.jsx
+└── contact/
+    └── page.jsx
+```
+
+那么 routes.js 返回的路由配置表如下：
+
+```js
+[
+  { path: '/', component: Index },
+  { path: '/about/', component: About },
+  { path: '/contact/', component: Contact },
+];
+```
+
+接着，我们修改一下 entry-server.jsx 文件，使用 createRouter 函数来创建路由：
+
+```jsx
+// title src/entry-server.jsx
+// highlight(3,4,6,7)
+import { renderToString } from 'react-dom/server';
+
+import { createRouter } from './next';
+import routes from './routes';
+
+export async function render({ url }) {
+  const html = renderToString(createRouter({ routes, url }));
+
+  return { html };
+}
+```
+
+注意，render 函数接收一个名为 url 的参数，该参数表示用户访问的 url。
+
+接着，我们修改一下 entry-client.jsx 文件，同样使用 createRouter 函数来创建路由：
+
+```jsx
+// title src/entry-client.jsx
+// highlight(3,4,6)
+import { hydrateRoot } from 'react-dom/client';
+
+import { createRouter } from './next';
+import routes from './routes';
+
+hydrateRoot(document.getElementById('app'), createRouter({ routes }));
+```
+
+最后，我们修改一下 server.js 文件，将 url 作为参数传递给 render 函数：
+
+```js
+// title server.js
+// highlight(9)
+app.use('*', async (req, res) => {
+  const url = req.originalUrl.replace(base, '/');
+
+  let template = await fs.readFile('./index.html', 'utf-8');
+  template = await vite.transformIndexHtml(url, template);
+
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const renderer = await render({ url });
+  const html = template.replace('<!--app-html-->', renderer.html ?? '');
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+```
+
+此时，你就可以通过在 src/pages 目录中创建文件来添加页面路由。
+
+例如，添加一个根路由：
+
+```jsx
+// title src/pages/page.jsx
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+export default function Index() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <button onClick={() => setCount(() => count + 1)}>count is {count}</button>
+      <p>
+        <Link to="/other">Go to another page</Link>
+      </p>
+    </>
+  );
+}
+```
+
+和一个 /other 路由：
+
+```jsx
+// title src/pages/other/page.jsx
+import { Link } from 'react-router-dom';
+
+export default function Other() {
+  return (
+    <div>
+      <p>This page is just for demonstrating client-side navigation.</p>
+      <Link to="/">Go back to index</Link>
+    </div>
+  );
+}
+```
+
+重启一下项目，访问 [http://localhost:3000](http://localhost:3000)，你应该能看到根路由页面的内容。点击页面上的链接，你会发现页面进行的是客户端导航，不会刷新整个页面。
+
+至此，我们已经实现了一个基本的路由系统。
+
+下一步，我们来实现一个 getServerSideProps 函数，实现服务端数据预取。
+
+### getServerSideProps
+
+首先，我们修改一下 index.html 文件：
+
+```html
+<!-- title index.html -->
+<!-- highlight(10) -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite SSR</title>
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+    <script src="/src/entry-client.jsx" type="module"></script>
+    <!--app-data-->
+  </body>
+</html>
+```
+
+我们在 HTML 中新加入了一个注释节点，之后我们会在服务端渲染时使用数据内容来替换它。
+
+接着，我们修改一下根路由文件：
+
+```jsx
+// title src/pages/page.jsx
+// highlight(1,2,3,4,5,10,19,20,21,22,23,24)
+export async function getServerSideProps() {
+  return {
+    hobby: ['🎤', '💃', '🤟', '🏀'],
+  };
+}
+
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+export default function Index({ hobby }) {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <button onClick={() => setCount(() => count + 1)}>count is {count}</button>
+      <p>
+        <Link to="/other">Go to another page</Link>
+      </p>
+      <p>Hobby</p>
+      <ul>
+        {hobby.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+我们导出了一个 getServerSideProps 函数，这个函数的作用是获取组件渲染所需的数据。之后我们会在服务端调用它，并将函数的返回值作为 props 传递给组件。
+
+接着，修改 server.js 文件：
+
+```js
+// title server.js
+// highlight(4,5,6,7,14,15,18,19,20,21,22,23)
+app.use('*', async (req, res) => {
+  const url = req.originalUrl.replace(base, '/');
+
+  if (url === '/favicon.ico') {
+    res.status(204).end();
+    return;
+  }
+
+  let template = await fs.readFile('./index.html', 'utf-8');
+  template = await vite.transformIndexHtml(url, template);
+
+  const render = (await vite.ssrLoadModule('./src/entry-server.jsx')).render;
+
+  const ctx = { serverSideProps: null };
+  const renderer = await render({ url, ctx });
+  const html = template
+    .replace('<!--app-html-->', renderer.html ?? '')
+    .replace(
+      '<!--app-data-->',
+      ctx.serverSideProps
+        ? `<script>window.__SSR_DATA__ = ${JSON.stringify({ url, props: ctx.serverSideProps })}</script>`
+        : ''
+    );
+
+  res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+});
+```
+
+在 server.js 文件中我们新增了一个 ctx 对象，用于存储在服务端获取的数据。之后我们将数据序列化后插入到 HTML 中。这样做的目的是为了确保客户端在水合时能利用这份数据生成与服务端一致的 DOM 结构。
+
+也许此时你会疑惑，这样做岂不是会增加 HTML 的体积？尤其是一些内容型的网站，HTML 的体积很可能会是双倍大小。
+
+事实上，的确是如此。目前这也是同构渲染普遍所采用的方案。我们只能做到尽可能减小插入数据的体积，无法完全消除。
+
+下一步，我们修改 entry-server.jsx 文件：
+
+```jsx
+// title src/entry-server.jsx
+// highlight(4,5,7,8,9,11,12,13,15)
+import { renderToString } from 'react-dom/server';
+import { matchRoutes } from 'react-router-dom';
+
+import { createRouter } from './next';
+import routes from './routes';
+
+export async function render({ url, ctx }) {
+  const [router] = matchRoutes(routes, url);
+  const { getServerSideProps } = router.route;
+
+  if (getServerSideProps) {
+    ctx.serverSideProps = await getServerSideProps({ params: router.params });
+  }
+
+  const html = renderToString(createRouter({ ctx, routes, url }));
+
+  return { html };
+}
+```
+
+我们通过 react-router-dom 提供的 **matchRoutes** 函数可以获取到 url 对应的路由配置。再从路由配置中获取 getServerSideProps 函数，并调用它。
+
+调用 getServerSideProps 函数获取到数据后，我们将数据存储到 ctx 对象中，并且在创建路由时传入 ctx。
+
+接着，我们在 next.jsx 中添加一个 RouteElement 组件：
+
+```jsx
+// title src/next.jsx
+import { matchPath } from 'react-router-dom';
+
+function RouteElement({ ctx, path, component: Component, getServerSideProps }) {
+  if (ctx) {
+    if (ctx.serverSideProps) {
+      return <Component {...ctx.serverSideProps} />;
+    } else {
+      return <Component />;
+    }
+  }
+
+  let { url, props: serverSideProps } = window.__SSR_DATA__ ?? {};
+  window.__SSR_DATA__ = null;
+
+  if (getServerSideProps) {
+    if (serverSideProps && matchPath(path, url)) {
+      return <Component {...serverSideProps} />;
+    }
+  }
+
+  return <Component />;
+}
+```
+
+我们在 RouteElement 组件中根据是否存在 ctx 对象来判断当前是否在服务端渲染，如果在服务端渲染，则从 ctx 中读取数据渲染组件。如果是客户端渲染，则从 **window.\_\_SSR_DATA\_\_** 中读取数据渲染组件。
+
+客户端渲染时我们还使用了 **matchPath** 函数来判断 url 是否能与路由 path 匹配，这么做的目的是为了保证数据能正确的传递给对应的路由。
+
+接着，我们修改一下 createRouter 函数，将 RouteElement 组件作为路由的元素：
+
+```jsx
+// title src/next.jsx
+// highlight(9)
+export function createRouter({ ctx, routes, url }) {
+  const Router = import.meta.env.SSR ? StaticRouter : BrowserRouter;
+
+  return (
+    <Router location={url}>
+      <Routes>
+        {routes.map((route) => {
+          const { path } = route;
+          return <Route key={path} path={path} element={<RouteElement ctx={ctx} {...route} />} />;
+        })}
+      </Routes>
+    </Router>
+  );
+}
+```
+
+最后，重启一下项目，你应该能够看到在根路由页面中显示了 Hobby 列表。
+
+### 客户端的 getServerSideProps
+
+我们目前已经实现了首屏渲染时，在服务端调用 getServerSideProps 函数来获取数据。但我们还有没实现，在客户端渲染时调用 getServerSideProps 函数来获取数据。
+
+例如，我们在 /other 路由中添加一个 getServerSideProps 函数：
+
+```jsx
+// title src/pages/other/page.jsx
+// highlight(1,2,3,4,5,7,10)
+export async function getServerSideProps() {
+  return {
+    title: 'Other',
+  };
+}
+
+export default function Other({ title }) {
+  return (
+    <div>
+      <h1>{title}</h1>
+      <p>This page is just for demonstrating client-side navigation.</p>
+      <Link to="/">Go back to index</Link>
+    </div>
+  );
+}
+```
+
+我们从首屏渲染的根路由通过链接进入到 /other，你会发现页面中没有显示 title 内容。
+
+通常情况下，客户端渲染不能直接调用 getServerSideProps 函数来获取数据，该函数应始终在服务端运行。常见的处理方式是由客户端发送请求到服务端，服务端调用 getServerSideProps 函数获取数据后再返回给客户端。
+
+在这里，我们不做这种复杂的处理，直接在客户端调用 getServerSideProps 函数来获取数据。
+
+首先，我们修改一下 entry-client.jsx 文件，将 createRouter 函数包裹在 Suspense 组件中：
+
+```jsx
+// title src/entry-client.jsx
+// highlight(1,7)
+import { Suspense } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+
+import { createRouter } from './next';
+import routes from './routes';
+
+hydrateRoot(document.getElementById('app'), <Suspense>{createRouter({ routes })}</Suspense>);
+```
+
+同样，在 entry-server.jsx 文件中，我们也将 createRouter 函数包裹在 Suspense 组件中：
+
+```jsx
+// title src/entry-server.jsx
+// highlight(1,16)
+import { Suspense } from 'react';
+import { renderToString } from 'react-dom/server';
+import { matchRoutes } from 'react-router-dom';
+
+import routes from './routes';
+import { createRouter } from './next';
+
+export async function render({ ctx, url }) {
+  const [router] = matchRoutes(routes, url);
+  const { getServerSideProps } = router.route;
+
+  if (getServerSideProps) {
+    ctx.serverSideProps = await getServerSideProps({ params: router.params });
+  }
+
+  const html = renderToString(<Suspense>{createRouter({ ctx, routes, url })}</Suspense>);
+
+  return { html };
+}
+```
+
+接着，我们在 next.jsx 文件中添加一个 fetchWithSuspense 函数：
+
+```jsx
+// title src/next.jsx
+const activeLoaderMap = new Map();
+
+function fetchWithSuspense({ fetchKey, fetchFn, fetchParams }) {
+  let loader;
+
+  if ((loader = activeLoaderMap.get(fetchKey))) {
+    if (loader.error || loader.data?.statusCode === 500) {
+      if (loader.data?.statusCode === 500) {
+        throw new Error(loader.data.message);
+      }
+      throw loader.error;
+    }
+
+    if (loader.suspended) {
+      throw loader.promise;
+    }
+
+    activeLoaderMap.delete(fetchKey);
+
+    return loader.data;
+  } else {
+    loader = {
+      suspended: true,
+      error: null,
+      data: null,
+      promise: null,
+    };
+
+    loader.promise = Promise.resolve(fetchFn(fetchParams))
+      .then((data) => (loader.data = data))
+      .catch((error) => (loader.error = error))
+      .finally(() => (loader.suspended = false));
+
+    activeLoaderMap.set(fetchKey, loader);
+
+    return fetchWithSuspense({ fetchKey, fetchFn, fetchParams });
+  }
+}
+```
+
+fetchWithSuspense 函数会把一个 promise 实例做为异常抛出，这样做的目的是什么呢？
+
+我们先继续修改代码，在 RouteElement 组件中我们通过 fetchWithSuspense 函数来调用 getServerSideProps 函数获取数据：
+
+```jsx
+// title src/next.jsx
+// highlight(1,20,22,23,24,25,26,27,28,29,30,31,32,33,34)
+import { useParams } from 'react-router-dom';
+
+function RouteElement({ ctx, path, component: Component, getServerSideProps }) {
+  if (ctx) {
+    if (ctx.serverSideProps) {
+      return <Component {...ctx.serverSideProps} />;
+    } else {
+      return <Component />;
+    }
+  }
+
+  let { url, props: serverSideProps } = window.__SSR_DATA__ ?? {};
+  window.__SSR_DATA__ = null;
+
+  if (getServerSideProps) {
+    if (serverSideProps && matchPath(path, url)) {
+      return <Component {...serverSideProps} />;
+    }
+
+    const params = useParams();
+
+    try {
+      serverSideProps = fetchWithSuspense({
+        fetchKey: path,
+        fetchFn: getServerSideProps,
+        fetchParams: { params },
+      });
+      return <Component {...serverSideProps} />;
+    } catch (error) {
+      if (error instanceof Error) {
+        return <p>Error: {error.message}</p>;
+      }
+      throw error;
+    }
+  }
+
+  return <Component />;
+}
+```
+
+可以看到，我们在渲染路由时捕获了 fetchWithSuspense 函数抛出的 promise，并将其继续向上传递。最顶层的 Suspense 组件会捕获这个 promise，并在 promise 解决后自动重新渲染其子组件。
+
+同时， react-router-dom 在渲染新的路由时，如果发生错误，则会停留在旧的路由。而因为 Suspense 组件的存在，所以在 promise 被解决后，react-router-dom 也会重新渲染新的路由并且不会再遇到错误。
+
+利用这些特点，我们就可以做到客户端使用 getServerSideProps 获取到下个路由的数据前，将页面视图停留在当前路由。
+
+重启一下项目，再次访问 /other 路由，此时你应该就能看到 title 内容了。
+
+至此，我们就实现了一个基本完整的同构渲染流程。
