@@ -5,7 +5,7 @@ date: 2024-12-11T16:00:00.000Z
 draft: false
 ---
 
-你可以阅读以下内容了解同构渲染的实现，也可以直接跳到[这里](https://github.com/985563349/vite-ssr/tree/main)查看完整代码。
+你可以阅读下面的内容了解同构渲染的实现，也可以直接跳到[这里](https://github.com/985563349/vite-ssr/tree/main)查看完整代码。
 
 ### 渲染
 
@@ -574,7 +574,7 @@ function RouteElement({ ctx, path, component: Component, getServerSideProps }) {
 }
 ```
 
-我们在 RouteElement 组件中根据是否存在 ctx 对象来判断当前是否在服务端渲染，如果在服务端渲染，则从 ctx 中读取数据渲染组件。如果是客户端渲染，则从 **window.\_\_SSR_DATA\_\_** 中读取数据渲染组件。
+我们在 RouteElement 组件中根据是否存在 ctx 对象来判断当前是否在服务端渲染，如果在服务端渲染，则从 ctx 中读取数据渲染组件。如果是客户端渲染，则从 **window.\_\_SSR\_DATA\_\_** 中读取数据渲染组件。
 
 客户端渲染时我们还使用了 **matchPath** 函数来判断 url 是否能与路由 path 匹配，这么做的目的是为了保证数据能正确的传递给对应的路由。
 
