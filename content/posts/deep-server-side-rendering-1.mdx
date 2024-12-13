@@ -147,7 +147,7 @@ export async function render() {
 
 ```js
 // title server.js
-// highlight(3,5,9,10,11,12,13,15,18,19,21,22)
+// highlight(3,5,9:13,15,18,19,21,22)
 import fs from 'node:fs/promises';
 import express from 'express';
 import { createServer } from 'vite';
@@ -446,7 +446,7 @@ export default function Other() {
 
 ```jsx
 // title src/pages/page.jsx
-// highlight(1,2,3,4,5,10,19,20,21,22,23,24)
+// highlight(1:5,10,19:24)
 export async function getServerSideProps() {
   return {
     hobby: ['🎤', '💃', '🤟', '🏀'],
@@ -482,7 +482,7 @@ export default function Index({ hobby }) {
 
 ```js
 // title server.js
-// highlight(4,5,6,7,14,15,18,19,20,21,22,23)
+// highlight(4:7,14,15,18:23)
 app.use('*', async (req, res) => {
   const url = req.originalUrl.replace(base, '/');
 
@@ -521,7 +521,7 @@ app.use('*', async (req, res) => {
 
 ```jsx
 // title src/entry-server.jsx
-// highlight(4,5,7,8,9,11,12,13,15)
+// highlight(4,5,7:9,11:13,15)
 import { renderToString } from 'react-dom/server';
 import { matchRoutes } from 'react-router-dom';
 
@@ -574,7 +574,7 @@ function RouteElement({ ctx, path, component: Component, getServerSideProps }) {
 }
 ```
 
-我们在 RouteElement 组件中根据是否存在 ctx 对象来判断当前是否在服务端渲染，如果在服务端渲染，则从 ctx 中读取数据渲染组件。如果是客户端渲染，则从 **window.\_\_SSR\_DATA\_\_** 中读取数据渲染组件。
+我们在 RouteElement 组件中根据是否存在 ctx 对象来判断当前是否在服务端渲染，如果在服务端渲染，则从 ctx 中读取数据渲染组件。如果是客户端渲染，则从 **window.\_\_SSR_DATA\_\_** 中读取数据渲染组件。
 
 客户端渲染时我们还使用了 **matchPath** 函数来判断 url 是否能与路由 path 匹配，这么做的目的是为了保证数据能正确的传递给对应的路由。
 
@@ -609,7 +609,7 @@ export function createRouter({ ctx, routes, url }) {
 
 ```jsx
 // title src/pages/other/page.jsx
-// highlight(1,2,3,4,5,7,10)
+// highlight(1:5,7,10)
 export async function getServerSideProps() {
   return {
     title: 'Other',
@@ -723,7 +723,7 @@ fetchWithSuspense 函数会把一个 promise 实例做为异常抛出，这样�
 
 ```jsx
 // title src/next.jsx
-// highlight(1,20,22,23,24,25,26,27,28,29,30,31,32,33,34)
+// highlight(1,20,22:34)
 import { useParams } from 'react-router-dom';
 
 function RouteElement({ ctx, path, component: Component, getServerSideProps }) {
