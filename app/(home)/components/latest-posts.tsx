@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import ArrowCard from '@/components/arrow-card';
+import NavLink from '@/components/nav-link';
 import client from '@/tina/__generated__/client';
 
 const LatestPosts: React.FC = async () => {
@@ -10,9 +11,7 @@ const LatestPosts: React.FC = async () => {
     <section className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-black dark:text-white">最近的文章</h3>
-        <Link href="/posts" className="link">
-          查看所有文章
-        </Link>
+        <NavLink href="/posts">查看所有文章</NavLink>
       </div>
 
       <ul className="flex flex-col gap-4">

@@ -1,8 +1,15 @@
-import Link from 'next/link';
+'use client';
 
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { FaGithub } from 'react-icons/fa';
+
+import NavLink from '@/components/nav-link';
 import ThemeToggle from '@/components/theme-toggle';
 
 const Header: React.FC = () => {
+  const pathname = usePathname();
+
   return (
     <header className="py-5">
       <div className="mx-auto max-w-screen-md px-5">
@@ -13,12 +20,8 @@ const Header: React.FC = () => {
 
           <div className="flex items-center gap-4">
             <nav className="space-x-4">
-              <Link href="/posts" className="link">
-                文章
-              </Link>
-              <Link href="/about" className="link">
-                关于我
-              </Link>
+              <NavLink href="/posts" active={/^\/posts(?:\/.*)?$/.test(pathname)}>文章</NavLink>
+              <NavLink href="/about" active={/^\/about(?:\/.*)?$/.test(pathname)}>关于我</NavLink>
             </nav>
 
             <ThemeToggle />

@@ -14,7 +14,6 @@ const Summary: React.FC = async () => {
           content={data.page.body}
           components={{
             p: (props) => <p {...props} />,
-            bold: (props) => <b className="font-black" {...props} />,
           }}
         />
       </article>
