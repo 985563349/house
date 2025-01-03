@@ -32,7 +32,7 @@ export default async function Hobby() {
 
 但此时，你也许会感到疑惑，获取服务端数据的方案已经有很多了，为什么 React 还要推出服务器组件？
 
-在本篇中，我们将会详细介绍服务器组件究竟有哪些优势。
+本篇，我们将会详细的去介绍服务器组件究竟具有哪些优势。
 
 ### 服务器组件的优势
 
@@ -160,7 +160,7 @@ export default function Comments() {
 
 因此，网络请求的流程大致如下：
 
-![client-component-request-flow](/client-component-request-flow.png '传统组件的网络请求')
+![client-component-request-flow](/client-component-request-flow.png "传统组件的网络请求")
 
 而使用服务器组件时，由于数据获取和渲染都在服务端完成，客户端只需要一次请求往返，就可以获得完整的页面内容。
 
@@ -210,7 +210,7 @@ export default async function Comments() {
 
 改为服务器组件后，网络请求的流程大致如下：
 
-![server-component-request-flow](/server-component-request-flow.png '服务器组件的网络请求')
+![server-component-request-flow](/server-component-request-flow.png "服务器组件的网络请求")
 
 我们可以明显看到，客户端对服务器的请求次数减少了。随着页面组件的复杂度增加，这个优势会越来越明显。
 
@@ -242,7 +242,9 @@ Bundle size 是 “向客户端运送了多少 JavaScript” 的一种花哨的�
 
 一直以来，我都有这样一个有趣的想法：
 
-也许 React 团队设计服务器组件时，可能初衷只是为了优化数据获取。但将组件移至服务端执行后，没想到竟然还有意外收获：大幅减小了捆绑包的体积。而这种 "意外收获" 恰恰成为了服务器组件最吸引人的特性之一。
+也许 React 团队设计服务器组件时，可能初衷只是为了优化数据获取。但将组件移至服务端执行后，没想到竟然还有意外收获：大幅减小了捆绑包的体积。
+
+而这种 "意外收获" 恰恰成为了服务器组件最吸引人的特性之一。
 
 ### 结束语
 
