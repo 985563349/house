@@ -2,6 +2,8 @@ import { TinaMarkdown } from 'tinacms/dist/rich-text';
 
 import client from '@/tina/__generated__/client';
 
+export const revalidate = 3600; // invalidate every hour
+
 const Summary: React.FC = async () => {
   const { data } = await client.queries.page({ relativePath: 'home.mdx' });
 
