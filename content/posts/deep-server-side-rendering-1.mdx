@@ -246,7 +246,7 @@ app.use('*', async (req, res) => {
 
 ### 路由
 
-在本节中，我们将基于 react-router-dom 实现一个文件系统的路由。
+在本节中，我们将基于 react-router-dom 实现一个文件路由系统。
 
 首先，安装一下依赖：
 
@@ -498,14 +498,15 @@ app.use('*', async (req, res) => {
 
   const ctx = { serverSideProps: null };
   const renderer = await render({ url, ctx });
-  const html = template
-    .replace('<!--app-html-->', renderer.html ?? '')
-    .replace(
-      '<!--app-data-->',
-      ctx.serverSideProps
-        ? `<script>window.__SSR_DATA__ = ${JSON.stringify({ url, props: ctx.serverSideProps })}</script>`
-        : ''
-    );
+  const html = template.replace('<!--app-html-->', renderer.html ?? '').replace(
+    '<!--app-data-->',
+    ctx.serverSideProps
+      ? `<script>window.__SSR_DATA__ = ${JSON.stringify({
+          url,
+          props: ctx.serverSideProps,
+        })}</script>`
+      : ''
+  );
 
   res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
 });

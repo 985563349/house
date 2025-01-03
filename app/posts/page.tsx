@@ -34,7 +34,7 @@ export default async function Posts() {
       <div className="space-y-10">
         <div className="font-semibold text-black dark:text-white">文章</div>
 
-        <div className="space-y-4">
+        <div className="space-y-8">
           {years.map((year) => (
             <section className="space-y-4" key={year}>
               <div className="font-semibold text-black dark:text-white">{year}</div>

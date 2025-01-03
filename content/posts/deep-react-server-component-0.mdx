@@ -1,0 +1,253 @@
+---
+title: 深入 React 服务器组件（0）：服务器组件的优势
+topic: content/topics/next-js.mdx
+date: 2025-01-01T16:00:00.000Z
+draft: false
+---
+
+如果你还不熟悉服务器组件，那么我先简单介绍一下。
+
+服务器组件（Server Components） 是 React 18 版本引入的一个新特性，它允许我们直接在服务端获取数据渲染组件，然后将其返回给客户端。
+
+嗯？这听起来和同构渲染很像，但请相信我，它们之间有非常大的区别。在后续的文章中，我会再详细地去介绍。
+
+语法上，服务器组件和传统的 React 组件一样。唯一可见的变化是，我们能在直接在组件中使用 async/await 语法。
+
+就像这样：
+
+```jsx
+export default async function Hobby() {
+  // 直接在 React 组件中进行异步数据获取！
+  const hobby = await getHobby();
+
+  if (!hobby) {
+    return <div>Empty</div>;
+  }
+
+  return <div>Server message: {hobby}</div>;
+}
+```
+
+这看起来真的很酷！
+
+但此时，你也许会感到疑惑，获取服务端数据的方案已经有很多了，为什么 React 还要推出服务器组件？
+
+在本篇中，我们将会详细介绍服务器组件究竟有哪些优势。
+
+### 服务器组件的优势
+
+自服务器组件发布以来，我一直在深度使用它，在尝试了各种模式后，这是我体会到的服务器组件带来的几个主要优势。
+
+#### 简化数据获取
+
+服务器组件极大的简化了数据获取的代码。我们回顾一下本文前面的示例：
+
+```jsx
+export default async function Hobby() {
+  const hobby = await getHobby();
+
+  if (!hobby) {
+    return <div>Empty</div>;
+  }
+
+  return <div>Server message: {hobby}</div>;
+}
+```
+
+使用服务器组件，这就是我从数据库中获取数据并将其呈现给浏览器所需的全部代码。
+
+而没有服务器组件，我通常需要写更多的代码才能实现功能。
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function Hobby() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hobby, setHobby] = useState('');
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    fetch('/api/hobby')
+      .then((res) => res.json())
+      .then((res) => setHobby(res.data))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (!isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!hobby) {
+    return <div>Empty</div>;
+  }
+
+  return <div>Client message: {hobby}</div>;
+}
+```
+
+#### 减少了网络请求
+
+服务器组件减少了加载页面内容所需的请求往返次数，这是目前我认为最重要的一个优点。
+
+我们发出的网络请求越少，页面加载速度就越快（尤其是在慢速网络/移动设备上）。
+
+想象一下这样一个场景：
+
+我们正在开发一个博客网站，在页面组件中引入了渲染正文和评论的组件。
+
+```jsx
+import Post from './components/post';
+import Comments from './components/comments';
+
+export default function Page() {
+  return (
+    <>
+      <Post />
+      <Comments />
+    </>
+  );
+}
+```
+
+正文组件会向服务器请求数据，然后渲染：
+
+```jsx
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+
+export default function Post() {
+  const { id } = useParams();
+  const [post, setPost] = useState('');
+
+  useEffect(() => {
+    fetch(`/api/post?id=${id}`)
+      .then((res) => res.json())
+      .then((res) => setPost(res.data));
+  }, []);
+
+  return <div>{post}</div>;
+}
+```
+
+评论组件也一样：
+
+```jsx
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+
+export default function Comments() {
+  const { id } = useParams();
+  const [comments, setComments] = useState([]);
+
+  useEffect(() => {
+    fetch(`/api/comment?id=${id}`)
+      .then((res) => res.json())
+      .then((res) => setComments(res.data));
+  }, []);
+
+  return (
+    <ul>
+      {comments.map((comment) => (
+        <li key={comment.id}>{comment.content}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+传统的 React 组件会先从服务器加载页面资源文件，等到组件渲染完成后，再发起数据请求。
+
+因此，网络请求的流程大致如下：
+
+![client-component-request-flow](/client-component-request-flow.png '传统组件的网络请求')
+
+而使用服务器组件时，由于数据获取和渲染都在服务端完成，客户端只需要一次请求往返，就可以获得完整的页面内容。
+
+页面组件我们保持不变：
+
+```jsx
+import Post from './components/post';
+import Comments from './components/comments';
+
+export default function Page() {
+  return (
+    <>
+      <Post />
+      <Comments />
+    </>
+  );
+}
+```
+
+修改一下正文组件，将其改为服务器组件：
+
+```jsx
+export default async function Post() {
+  const { id } = await useParams();
+  const post = await getPost(id);
+
+  return <div>{post}</div>;
+}
+```
+
+评论组件也一样：
+
+```jsx
+export default async function Comments() {
+  const { id } = await useParams();
+  const comments = await getComments(id);
+
+  return (
+    <ul>
+      {comments.map((comment) => (
+        <li key={comment.id}>{comment.content}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+改为服务器组件后，网络请求的流程大致如下：
+
+![server-component-request-flow](/server-component-request-flow.png '服务器组件的网络请求')
+
+我们可以明显看到，客户端对服务器的请求次数减少了。随着页面组件的复杂度增加，这个优势会越来越明显。
+
+#### 可使用服务端 API
+
+服务器组件是在服务端渲染的，这意味着我们可以直接使用服务端的 API。
+
+例如，我们可以通过 readFile 来读取文件内容：
+
+```jsx
+import { readFile } from 'fs/promises';
+
+export default async function Post() {
+  const post = await readFile('./content/post.text', 'utf8');
+
+  return <div>{post}</div>;
+}
+```
+
+#### 更小的 Bundle Sizes
+
+Bundle size 是 “向客户端运送了多少 JavaScript” 的一种花哨的说法。
+
+传统的 React 组件需要将其所有代码和依赖项都发送给客户端，而服务器组件只会将**渲染的结果**发送给客户端。
+
+也就是说，无论你在组件中使用了多少依赖，最终发送给客户端的 Bundle Size 总是最小的。
+
+较小的捆绑包大小很重要，它会让页面内容的加载时间更快，这对于用户体验来说至关重要。
+
+一直以来，我都有这样一个有趣的想法：
+
+也许 React 团队设计服务器组件时，可能初衷只是为了优化数据获取。但将组件移至服务端执行后，没想到竟然还有意外收获：大幅减小了捆绑包的体积。而这种 "意外收获" 恰恰成为了服务器组件最吸引人的特性之一。
+
+### 结束语
+
+在本篇中，我们详细介绍了 React 服务器组件的几个优势。
+
+虽然服务器组件在 Web 开发社区中激起了各种争论，但我认为它是 React 生态系统向前迈出的一大步。
+
+如果你对服务器组件感兴趣，欢迎关注我的博客，我会持续更新相关内容。
