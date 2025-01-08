@@ -1,5 +1,5 @@
 ---
-title: 深入 React 服务器组件（0）：服务器组件的优势
+title: 深入 React 服务器组件（0）：优势
 topic: content/topics/next-js.mdx
 date: 2025-01-01T16:00:00.000Z
 draft: false
@@ -9,7 +9,9 @@ draft: false
 
 服务器组件（Server Components） 是 React 18 版本引入的一个新特性，它允许我们直接在服务端获取数据渲染组件，然后将其返回给客户端。
 
-嗯？这听起来有点像是同构渲染，但请相信我，它们之间有着非常大的区别。在后续的文章中，我会再详细地去介绍。
+嗯？这听起来有点像是同构渲染。
+
+请相信我，它们之间有着非常大的区别。后续的文章中，我会再详细地去介绍。
 
 语法上，服务器组件和传统的 React 组件一样。唯一可见的变化是，我们能在直接在组件中使用 async/await 语法。
 
@@ -32,21 +34,21 @@ export default async function Hobby() {
 
 作为多年使用 React 的玩家，起初看到这段代码时我感觉非常奇怪。
 
-因为直觉告诉我，在 React 中函数组件不能是异步的。并且一直以来 React 也不允许在渲染过程中直接进行副作用操作。
+因为直觉告诉我，在 React 中，函数组件不能是异步的，并且一直以来 React 也不允许在渲染过程中直接进行副作用操作。
 
 现在这样做岂不是完全背离了 React 的原则？
 
-而事实上，并非如此。
+事实上，并非如此。
 
-原因是因为，在 React 的生命周期内，**服务器组件不会重新渲染，它们只在服务器上运行一次**。
+原因是，在 React 的生命周期内，**服务器组件不会被重新渲染，它们只在服务器上运行一次**。
 
 你可以简单理解为，服务器组件生成的是完全静态的节点，无论怎样渲染都不会产生变化。
 
-所以，它依旧遵循着 React 的原则。
+因此，它依旧遵循着 React 的原则。
 
 但不得不说，服务器组件的概念是一次大胆的尝试，它打破了 React 一直以来对组件的定义。
 
-接下来，我们就来具体看一下服务器组件带来了哪些实际优势。
+接下来，我们来看一下服务器组件具体带来了哪些实际优势。
 
 ### 服务器组件的优势
 
@@ -223,7 +225,7 @@ export default function Comments() {
 
 因此，网络请求的流程大致如下：
 
-![client-component-request-flow](/client-component-request-flow.png '传统组件的网络请求')
+![client-component-request-flow](/client-component-request-flow.png "传统组件的网络请求")
 
 而使用服务器组件，数据获取和组件渲染都在服务端完成，客户端只需要一次请求往返，就可以获得全部的内容。
 
@@ -273,7 +275,7 @@ export default async function Comments() {
 
 改为服务器组件后，网络请求的流程大致如下：
 
-![server-component-request-flow](/server-component-request-flow.png '服务器组件的网络请求')
+![server-component-request-flow](/server-component-request-flow.png "服务器组件的网络请求")
 
 我们可以明显看到，客户端的请求往返次数减少了。随着页面组件的复杂度增加，这个优势会越来越明显。
 
