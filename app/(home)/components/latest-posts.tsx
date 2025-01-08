@@ -4,8 +4,6 @@ import ArrowCard from '@/components/arrow-card';
 import NavLink from '@/components/nav-link';
 import client from '@/tina/__generated__/client';
 
-export const revalidate = 3600; // invalidate every hour
-
 const LatestPosts: React.FC = async () => {
   const { data } = await client.queries.postConnection({ last: 3, sort: 'date' });
 

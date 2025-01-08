@@ -1,5 +1,5 @@
 ---
-title: 深入 React 服务器组件（0）：优势
+title: 深入 React 服务器组件（0）：优势和限制
 topic: content/topics/next-js.mdx
 date: 2025-01-01T16:00:00.000Z
 draft: false
@@ -48,7 +48,7 @@ export default async function Hobby() {
 
 但不得不说，服务器组件的概念是一次大胆的尝试，它打破了 React 一直以来对组件的定义。
 
-接下来，我们来看一下服务器组件具体带来了哪些实际优势。
+了解服务器组件的基本概念后，接下来我们深入探讨一下它带来的优势和限制。
 
 ### 服务器组件的优势
 
@@ -225,7 +225,7 @@ export default function Comments() {
 
 因此，网络请求的流程大致如下：
 
-![client-component-request-flow](/client-component-request-flow.png "传统组件的网络请求")
+![client-component-request-flow](/client-component-request-flow.png '传统组件的网络请求')
 
 而使用服务器组件，数据获取和组件渲染都在服务端完成，客户端只需要一次请求往返，就可以获得全部的内容。
 
@@ -275,16 +275,29 @@ export default async function Comments() {
 
 改为服务器组件后，网络请求的流程大致如下：
 
-![server-component-request-flow](/server-component-request-flow.png "服务器组件的网络请求")
+![server-component-request-flow](/server-component-request-flow.png '服务器组件的网络请求')
 
 我们可以明显看到，客户端的请求往返次数减少了。随着页面组件的复杂度增加，这个优势会越来越明显。
 
 #### 缓存
 
-服务队组件可以缓存运行结果，这些结果可以在后续请求中重用，并且跨不同客户端共享。
+服务队组件可以缓存运行的结果，这些结果能在后续请求中重用，并且跨不同客户端共享。这样可以减少服务器的压力，提高响应速度。
+
+### 服务器组件的限制
+
+由于服务器组件仅在服务器端执行，且不会在客户端重新渲染，因此它存在以下几个关键的限制：
+
+- **不能存在状态**：不能使用 **useState**、**useReducer**、**useRef** 和 **useContext** 等存在状态的 hook。
+- **不能存在副作用**：不能使用 **useEffect**、**useLayoutEffect** 等定义副作用的 hook。
+- **不能定义事件处理**：不能使用 **onClick**、**onChange** 等定义事件处理程序。
+- **不能访问浏览器 API**：不能访问 **document**、**window** 等仅在浏览器中存在的 API。
+
+这些限制看起来好像令人生畏，但其实我们并不需要刻意去记忆。即使在开发过程中不小心违反了这些限制，React 也会通过清晰的错误提示来帮助我们及时发现和修正。
 
 ### 结束语
 
-虽然服务器组件在 Web 开发社区中激起了各种争论，但我认为它是 React 生态系统向前迈出的一大步。
+服务器组件一经发布，就在 Web 开发社区中激起了各种争论。虽然各种质疑的声音不绝于耳，但我认为它是 React 生态系统向前迈出的一大步。
+
+目前服务器组件已在 NextJS、GatsbyJS 等上层框架中得到支持，如果你想要使用它，可以先从这些框架入手。
 
 如果你对服务器组件感兴趣，欢迎关注我的博客，我会持续更新相关内容。
