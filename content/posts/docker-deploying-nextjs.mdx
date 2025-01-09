@@ -1,0 +1,693 @@
+---
+title: 使用 Docker 部署 NextJS 应用
+topic: content/topics/next-js.mdx
+date: 2025-01-07T16:00:00.000Z
+draft: false
+---
+
+NextJS 官方提供了多种部署方式，包括：
+
+- Vercel 部署（最简单）
+- Docker 容器化部署（最灵活，适合自托管）
+- 静态导出部署
+- 传统服务器部署
+
+你可以查看[官方文档](https://nextjs.org/docs/app/building-your-application/deploying)了解更多信息。
+
+本文我将重点介绍如何使用 Docker 进行容器化部署。
+
+具体内容我会分步骤详细介绍，包括：
+
+- NextJS 生产构建配置
+- Docker 配置
+- 生产服务器准备和配置
+- Nginx 配置代理与 HTTP/2
+- 手动部署
+- 使用 Github Actions 实现自动化部署
+
+### 准备
+
+在开始之前，你需要准备以下资源：
+
+**一台 Linux 服务器**
+
+国内推荐使用 [腾讯云](https://cloud.tencent.com/product/cvm) 或者 [阿里云](https://www.aliyun.com/product/ecs) 的云服务器，操作系统建议使用主流的 Linux 发行版，如 Ubuntu 或 CentOS，配置建议最少使用 2 核 2G 以上的配置。
+
+本网站目前使用的是阿里云的 ESC 云服务器，操作系统为 Ubuntu 22.04 LTS，配置为 2 核 2G。
+
+**一个域名**
+
+国内推荐使用 [腾讯云](https://dnspod.cloud.tencent.com) 或者 [阿里云](https://wanwang.aliyun.com) 的域名服务。
+
+本网站目前使用的是阿里云的域名服务。
+
+需要注意的是，国内域名需要备案才能使用，备案时间通常在 30 天左右。并且域名是跟随云服务器的，也就是说，你在阿里云备案的域名，只能绑定阿里云的云服务器。
+
+**一个 Github 仓库**
+
+如果你想使用 Github Actions 实现自动化部署，那么你需要一个 Github 远程仓库。
+
+### NextJS 生产构建配置
+
+在 next.config.ts 中，我们需要配置以下内容：
+
+- 设置 **output 为 standalone**，NextJS 会生成运行应用所需的最小文件集。这种模式特别适合容器化部署，因为它可以显著减小镜像大小。
+- 设置 **headers**，如果你使用了[流式响应](https://nextjs.org/docs/app/building-your-application/routing/loading-ui-and-streaming)，那么需要设置 **X-Accel-Buffering 为 no**，这样可以避免 Nginx 的响应缓存。
+
+```ts
+// title: next.config.ts
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  output: 'standalone',
+  async headers() {
+    return [
+      {
+        source: '/:path*{/}?',
+        headers: [
+          {
+            key: 'X-Accel-Buffering',
+            value: 'no',
+          },
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+```
+
+### Docker 配置
+
+首先，你需要确保本地已经安装了 Docker 环境。
+
+Mac 环境可以使用 [Docker Desktop](https://www.docker.com/products/docker-desktop) 或者 [OrbStack](https://orbstack.dev) 来安装 Docker。如果你更习惯使用 Docker 命令而非图形化界面，那么我更推荐你使用 OrbStack，因为它启动更快，内存占用更小。
+
+Windows 环境只能使用 [Docker Desktop](https://www.docker.com/products/docker-desktop) 来安装 Docker。如果你是家庭版系统，可能没法顺利安装 Docker，你需要自行搜索解决方案。
+
+准备好 Docker 环境后，我们就可以开始编写 Dockerfile 了。
+
+#### 编写 Dockerfile
+
+首先，在项目根目录下创建一个 Dockerfile 文件，然后写入以下内容：
+
+```dockerfile
+# title Dockerfile
+# syntax=docker.io/docker/dockerfile:1
+
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN \
+  if [ -f yarn.lock ]; then yarn run build; \
+  elif [ -f package-lock.json ]; then npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+
+# server.js is created by next build from the standalone output
+# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
+```
+
+如果你还不清楚 Dockerfile 的语法，可以点击[这里](/posts/docker-dockerfile)。
+
+我们使用了多阶段去构建 Docker 镜像，这样能充分的利用层缓存，提升构建速度，并减少镜像大小。
+
+接着，我们创建一个 .dockerignore 文件，并写入以下内容：
+
+```
+# Logs
+pnpm-debug.log
+README.md
+
+.next
+node_modules
+
+.dockerignore
+Dockerfile
+
+# Editor directories and files
+.vscode
+.github
+.git
+.DS_Store
+```
+
+.dockerignore 文件用于构建镜像时，告诉 Docker 需要忽略哪些文件。
+
+#### 本地运行测试
+
+你需要确保本地已经启动了 Docker Desktop 或者 OrbStack。
+
+然后，在项目根目录下运行以下命令在本地构建镜像：
+
+```bash
+docker build -t nextjs-app .
+```
+
+构建成功后，你可以运行以下命令在本地启动容器：
+
+```bash
+docker run -p 3000:3000 nextjs-app
+```
+
+访问 [http://localhost:3000](http://localhost:3000)，如果看到 NextJS 应用的页面，那么说明本地构建和运行成功。
+
+### 生产服务器的准备和配置
+
+在生产环境的云服务器上，我们需要完成以下四个关键步骤：
+
+#### 开启远程登录
+
+首先，你需要确保云服务器允许远程登录，后续我们会通过远程连接在服务器进行操作。
+
+这里，我们以阿里云 Ubuntu 22.04 LTS 为例：
+
+- 在控制台中，找到你的云服务器，然后点击远程连接并立即登录。
+
+- 登录服务器后，打开 **/etc/ssh/sshd_config** 文件：
+
+- 找到 **PasswordAuthentication** 配置项，并将其值改为 **yes**：
+
+```bash
+PasswordAuthentication yes
+```
+
+- 找到 **PermitRootLogin** 配置项，并将其值改为 **yes**：
+
+```bash
+PermitRootLogin yes
+```
+
+修改完成后，保存文件。
+
+这两项配置的作用是允许使用密码登录进行远程登录，和允许 root 用户远程登录。
+
+- 接着，重启 SSH 服务：
+
+```bash
+sudo systemctl restart sshd
+```
+
+- 设置 root 用户密码，如果尚未设置，可以使用以下命令：
+
+```bash
+sudo passwd root
+```
+
+- 设置完成后，你可以在本地的终端上使用 root 账户和服务器公网 IP 进行远程登录：
+
+```bash
+# 需要将 your-server-ip 替换为你的服务器公网 IP
+ssh root@your-server-ip
+```
+
+这里由于我们是刚进入服务器进行配置，所以选择了开启密码登录。但出于安全考虑，建议在完成初始配置后切换到 SSH 密钥登录方式。
+
+我会在后续的 Github Actions 自动化部署章节中详细介绍如何配置和使用 SSH 密钥登录。
+
+#### 安装 Docker
+
+在新的主机上首次安装 Docker 前，你需要先设置 Docker 的 apt 存储库。之后，你可以从存储库安装和更新 Docker。
+
+- 设置 apt 存储库：
+
+```bash
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+- 安装最新的 Docker：
+
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+- 验证 Docker 安装是否成功：
+
+```bash
+sudo docker run hello-world
+```
+
+此时，Docker 会下载测试镜像并在容器中运行，运行成功后它会打印一条确认消息并退出。
+
+现在，我们已经在服务器上完成了 Docker 的安装。
+
+#### 安装 Nginx
+
+我们需要使用 Nginx 作为代理，将 Docker 容器中的 NextJS 应用暴露到外部网络，并配置 HTTP/2 支持。
+
+- 安装 Nginx：
+
+```bash
+sudo apt-get install nginx
+```
+
+只需要一行命令，Nginx 就会自动安装完成。
+
+#### 确保端口开放
+
+我们需要确保云服务器的 80 和 443 端口对外开放。
+
+这里，我们以阿里云为例：
+
+1. 在控制台中，找到你的云服务器，然后点击安全组。
+2. 在安全组中，找到入方向规则
+3. 检查入规则列表数据中，是否存在 80 和 443 端口，如果没有，则点击手动添加，然后添加 80 和 443 端口。
+
+### Nginx 配置
+
+要开启 HTTP/2 支持，首先我们必须要先开启 HTTPS。
+
+#### 获取 SSL 证书
+
+目前国内的云服务器厂商都提供了证书服务，如果是企业级应用，建议使用付费证书。如果是学习用途，可以申请免费的 SSL 测试证书。
+
+如果你使用的是阿里云，可以查看[阿里云 SSL 证书服务](https://www.aliyun.com/product/cas)。
+
+如果你使用的是腾讯云，可以查看[腾讯云 SSL 证书服务](https://cloud.tencent.com/product/ssl)。
+
+这里，我们以免费证书为例，进入到证书管理页面后，完成免费证书的申请。
+
+申请完成后，我们需要将将证书下载到本地。
+
+通常，在证书列表的操作一栏能找到下载按钮，我们选择下载类型为 Nginx。
+
+下载完成之后，你会得到一个压缩文件，解压后你会看到两个文件，分别是：
+
+- **.pem** 结尾的证书文件
+- **.key** 结尾的私钥文件
+
+接着，我们将这两个文件上传到服务器上。
+
+我们可以使用 **scp** 命令进行上传：
+
+```bash
+# 需要将 file-name 替换为你的文件名，your-server-ip 替换为你的服务器公网 IP
+scp file-name.pem root@your-server-ip:/etc/nginx/certs/
+scp file-name.key root@your-server-ip:/etc/nginx/certs/
+```
+
+文件上传完成后，你可以在 **/etc/nginx/certs** 目录下看到这两个文件。接下来，我们就可以开始配置 Nginx 了。
+
+#### 配置 Nginx
+
+在服务器的 **/etc/nginx/sites-enabled** 目录下，找到 **default** 文件，这是 Nginx 的默认配置文件。
+
+打开该文件，并修改为以下内容：
+
+```nginx
+server {
+        # SSL configuration
+        #
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        server_name your-domain;
+
+        ssl_certificate /etc/nginx/certs/file-name.pem;
+        ssl_certificate_key /etc/nginx/certs/file-name.key;
+
+        #
+        # Note: You should disable gzip for SSL traffic.
+        # See: https://bugs.debian.org/773332
+        #
+        # Read up on ssl_ciphers to ensure a secure configuration.
+        # See: https://bugs.debian.org/765782
+        #
+        # Self signed certs generated by the ssl-cert package
+        # Don't use them in a production server!
+        #
+        # include snippets/snakeoil.conf;
+        location / {
+                proxy_pass http://localhost:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+        }
+}
+
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        server_name _;
+
+        return 301 https://$host$request_uri;
+}
+```
+
+注意，配置中的 **your-domain** 需要替换为你的域名，**file-name** 需要替换为你的证书文件名。
+
+我们在配置中监听了 80 端口（http 协议的默认端口），和 443 端口（https 协议的默认端口）。
+
+80 端口主要用于将 http 请求重定向到 443 端口，443 端口用于处理请求。
+
+在 443 端口，我们配置了 HTTPS 和 HTTP/2 支持。并在 **location /** 配置项中，将请求代理到本地 3000 端口，之后我们会在这个端口上运行 Docker 容器。
+
+配置完成后，保存文件。
+
+接着，我们测试 Nginx 配置是否正确：
+
+```bash
+sudo nginx -t
+```
+
+如果配置正确，你会看到类似以下的输出：
+
+```bash
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+
+接着，我们重启 Nginx 服务：
+
+```bash
+sudo systemctl restart nginx
+```
+
+至此，你就已经完成了 Nginx 的配置。
+
+### 手动部署
+
+你可以在本地构建镜像，然后上传到服务器，接着在服务器上运行镜像。
+
+#### 本地构建镜像
+
+在项目根目录下，运行以下命令：
+
+```bash
+docker build -t nextjs-app .
+```
+
+#### 导出镜像
+
+构建完成后，通过 **docker save** 命令将镜像导出至本地：
+
+```bash
+docker save -o nextjs-app.tar nextjs-app
+```
+
+导出成功后，会有一个 **nextjs-app.tar** 文件，在项目根目录下。
+
+#### 上传镜像
+
+接着，我们通过 **scp** 命令将镜像上传到服务器：
+
+```bash
+scp nextjs-app.tar root@your-server-ip:/var/www/nextjs-app
+```
+
+注意，你需要将 **your-server-ip** 替换为你的服务器公网 IP。
+
+#### 载入镜像
+
+上传完成后，我们在服务器上，通过 **docker load** 命令将镜像载入：
+
+```bash
+docker load -i /var/www/nextjs-app/nextjs-app.tar
+```
+
+载入完成后，你可以通过 **docker images** 命令查看镜像是否载入成功：
+
+```bash
+docker images
+```
+
+如果看到 **nextjs-app** 镜像，那么说明镜像载入成功。
+
+#### 运行容器
+
+载入完成后，我们就可以通过 **docker run** 命令来运行容器：
+
+```bash
+docker run -d --name nextjs-app -p 3000:3000 nextjs-app
+```
+
+运行成功后，你可以通过 **docker ps** 命令查看容器是否运行成功：
+
+```bash
+docker ps
+```
+
+如果看到 **nextjs-app** 容器，那么说明容器运行成功。
+
+此时，你就可以通过你的域名访问到 NextJS 应用了。
+
+### 使用 Github Actions 实现自动化部署
+
+本节内容需要你有一定的 Github Actions 使用经验，如果你还不熟悉，可以通过[官方文档](https://docs.github.com/en/actions)来学习基本用法。
+
+实现自动化部署的方案有很多，比如：Gitlab CI、Jenkins、Github Actions 等。如果是企业级项目，我更建议使用 Gitlab CI 或者 Jenkins，因为它们便于做私有化。
+
+#### 创建 Github Actions 工作流
+
+首先，在项目根目录下，我们创建一个 **.github/workflows** 目录，然后在目录下创建一个 **ci.yml** 文件，并写入以下内容：
+
+```yaml
+# title ci.yml
+name: CI
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Generate Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: nextjs-app:latest
+          outputs: type=docker,dest=nextjs-app.tar
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move Cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Export Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-app-docker-image
+          path: nextjs-app.tar
+          retention-days: 1
+
+  deploy:
+    name: Restart Server Docker Container
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Import Docker Image
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-app-docker-image
+          path: images
+
+      - name: Upload Docker Image
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: images/*
+          target: ${{ secrets.IMAGE_DIR_PATH }}
+          strip_components: 1
+
+      - name: Restart Docker Container
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # load local image
+            docker load -i ${{ secrets.IMAGE_DIR_PATH }}/nextjs-app.tar
+
+            # restart container
+            docker stop nextjs-app || true
+            docker rm nextjs-app || true
+            docker run -d --name nextjs-app -p 3000:3000 nextjs-app
+
+            # clean unused images
+            docker image prune -f
+```
+
+在配置中，我们定义了两个 job，分别是 **build** 和 **deploy**。
+
+**build** 的具体步骤如下：
+
+- Checkout：拉取代码
+- Setup Docker Buildx：设置 Docker Buildx
+- Cache Docker layers：设置 Docker 层缓存
+- Build Docker Image：构建 Docker 镜像
+- Move Cache：备份缓存
+- Export Docker Image：导出 Docker 镜像
+
+**deploy** 的具体步骤如下：
+
+- Import Docker Image：导入 Docker 镜像
+- Upload Docker Image：上传 Docker 镜像
+- Restart Docker Container：重启 Docker 容器
+
+#### 配置 Secrets
+
+在 ci.yml 文件中，我们使用了 secrets 来获取服务器信息。secrets 是 Github 仓库的私有变量，用于存储敏感信息。
+
+接下来，我们需要在 Github 仓库中配置这些 secrets。
+
+具体需要的 secrets 如下：
+
+- SSH_HOST：服务器公网 IP
+- SSH_USERNAME：服务器用户名
+- SSH_PRIVATE_KEY：SSH 密钥
+- IMAGE_DIR_PATH：镜像保存路径
+
+配置步骤如下：
+
+1. 在 Github 仓库中，点击 Settings -> Secrets and variables -> Actions
+2. 点击 New repository secret
+3. 输入名称，并填写对应的值
+4. 重复以上步骤，配置所有需要的 secrets
+
+这里我们暂时还没有 SSH 密钥，接下来我们就来生成 SSH 密钥。
+
+##### 生成 SSH 密钥
+
+你可以先通过命令检查本地是否已经存在 SSH 密钥：
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+如果输出了一串字符，那么说明本地已经存在 SSH 密钥。
+
+否则，你需要使用以下命令来生成 SSH 密钥：
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
+```
+
+执行该命令后，系统会提示你选择存储密钥的位置，通常使用默认的即可。
+
+-C 一般用于添加注释，一般是使用你的电子邮件。
+
+现在，你可以在 **~/.ssh** 目录下看到生成的两个密钥文件：
+
+- **id_rsa**：私钥
+- **id_rsa.pub**：公钥
+
+接着，执行以下命令，将公钥添加到服务器已授权的密钥列表中：
+
+```bash
+cat ~/.ssh/id_rsa.pub | ssh root@your-server-ip 'cat >> .ssh/authorized_keys'
+```
+
+**your-server-ip** 需要替换为你的服务器公网 IP。
+
+最后，执行以下命令：
+
+```bash
+cat ~/.ssh/id_rsa
+```
+
+并复制输出的内容，作为 SSH_PRIVATE_KEY 的值，添加到 Github 仓库的 Secrets 中。
+
+##### 触发工作流
+
+首先将你本地的代码推送到 Github 仓库，然后进入仓库的 Actions 页面，点击 Run workflow 按钮，就能触发工作流。
+
+工作流触发后，你可以在 Actions 页面看到工作流的执行情况。
+
+如果工作流执行成功，那么应用就自动部署到服务器了。
+
+### 总结
+
+以上就是使用 Docker 部署 NextJS 应用的全部内容。
+
+企业级项目的部署方案，在细节上可能会有所不同，但整体思路是相通的。
+
+如果你对 Docker 和 NextJS 感兴趣，欢迎关注我的博客，我会持续分享更多相关内容。
