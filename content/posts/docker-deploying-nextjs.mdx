@@ -12,7 +12,7 @@ NextJS 官方提供了多种部署方式，包括：
 - 静态导出部署
 - 传统服务器部署
 
-你可以查看[官方文档](https://nextjs.org/docs/app/building-your-application/deploying)了解更多信息。
+你可以查看[官方文档](https://nextjs.org/docs/app/building-your-application/deploying)了解更多的信息。
 
 本文我将重点介绍如何使用 Docker 进行容器化部署。
 
@@ -23,7 +23,7 @@ NextJS 官方提供了多种部署方式，包括：
 - 生产服务器准备和配置
 - Nginx 配置代理与 HTTP/2
 - 手动部署
-- 使用 Github Actions 实现自动化部署
+- 使用 Github Actions 自动化部署
 
 ### 准备
 
@@ -31,7 +31,7 @@ NextJS 官方提供了多种部署方式，包括：
 
 **一台 Linux 服务器**
 
-国内推荐使用 [腾讯云](https://cloud.tencent.com/product/cvm) 或者 [阿里云](https://www.aliyun.com/product/ecs) 的云服务器，操作系统建议使用主流的 Linux 发行版，如 Ubuntu 或 CentOS，配置建议最少使用 2 核 2G 以上的配置。
+国内推荐使用 [腾讯云](https://cloud.tencent.com/product/cvm) 或者 [阿里云](https://www.aliyun.com/product/ecs) 的云服务器，操作系统建议使用主流的 Linux 发行版，比如 Ubuntu 或 CentOS，配置方面建议最少使用 2 核 2G 以上的配置。
 
 本网站目前使用的是阿里云的 ESC 云服务器，操作系统为 Ubuntu 22.04 LTS，配置为 2 核 2G。
 
@@ -39,9 +39,9 @@ NextJS 官方提供了多种部署方式，包括：
 
 国内推荐使用 [腾讯云](https://dnspod.cloud.tencent.com) 或者 [阿里云](https://wanwang.aliyun.com) 的域名服务。
 
-本网站目前使用的是阿里云的域名服务。
+需要注意的是，国内域名必须通过备案才能使用，备案时间一般在 30 天左右。并且域名是跟随云服务器的，也就是说，你在阿里云备案的域名，只能绑定阿里云的云服务器。
 
-需要注意的是，国内域名需要备案才能使用，备案时间通常在 30 天左右。并且域名是跟随云服务器的，也就是说，你在阿里云备案的域名，只能绑定阿里云的云服务器。
+本网站目前使用的是阿里云的域名服务。
 
 **一个 Github 仓库**
 
@@ -80,11 +80,13 @@ export default nextConfig;
 
 ### Docker 配置
 
+如果你还不熟悉 Docker，可以点击[这里](/posts/docker-getting-started)。
+
 首先，你需要确保本地已经安装了 Docker 环境。
 
 Mac 环境可以使用 [Docker Desktop](https://www.docker.com/products/docker-desktop) 或者 [OrbStack](https://orbstack.dev) 来安装 Docker。如果你更习惯使用 Docker 命令而非图形化界面，那么我更推荐你使用 OrbStack，因为它启动更快，内存占用更小。
 
-Windows 环境只能使用 [Docker Desktop](https://www.docker.com/products/docker-desktop) 来安装 Docker。如果你是家庭版系统，可能没法顺利安装 Docker，你需要自行搜索解决方案。
+Windows 环境只能使用 [Docker Desktop](https://www.docker.com/products/docker-desktop) 来安装 Docker。如果你是家庭版系统，可能没法顺利安装，你需要自行搜索解决方案。
 
 准备好 Docker 环境后，我们就可以开始编写 Dockerfile 了。
 
@@ -162,7 +164,7 @@ ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 ```
 
-如果你还不清楚 Dockerfile 的语法，可以点击[这里](/posts/docker-dockerfile)。
+如果你还不熟悉 Dockerfile 的语法，可以点击[这里](/posts/docker-dockerfile)。
 
 我们使用了多阶段去构建 Docker 镜像，这样能充分的利用层缓存，提升构建速度，并减少镜像大小。
 
@@ -190,29 +192,29 @@ Dockerfile
 
 #### 本地运行测试
 
-你需要确保本地已经启动了 Docker Desktop 或者 OrbStack。
+首先，你需要确保本地已经启动了 Docker Desktop 或者 OrbStack。
 
-然后，在项目根目录下运行以下命令在本地构建镜像：
+然后，在项目根目录下执行以下命令开始构建镜像：
 
 ```bash
 docker build -t nextjs-app .
 ```
 
-构建成功后，你可以运行以下命令在本地启动容器：
+构建成功后，你可以执行以下命令在本地启动容器：
 
 ```bash
 docker run -p 3000:3000 nextjs-app
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)，如果看到 NextJS 应用的页面，那么说明本地构建和运行成功。
+访问 [http://localhost:3000](http://localhost:3000)，如果看到 NextJS 应用的页面，那么说明在本地构建和运行成功。
 
 ### 生产服务器的准备和配置
 
-在生产环境的云服务器上，我们需要完成以下四个关键步骤：
+生产环境的云服务器上，我们需要完成以下四个关键步骤：
 
 #### 开启远程登录
 
-首先，你需要确保云服务器允许远程登录，后续我们会通过远程连接在服务器进行操作。
+首先，你需要确保云服务器允许远程登录，后续我们会通过远程连接在服务器上进行操作。
 
 这里，我们以阿里云 Ubuntu 22.04 LTS 为例：
 
@@ -242,7 +244,7 @@ PermitRootLogin yes
 sudo systemctl restart sshd
 ```
 
-- 设置 root 用户密码，如果尚未设置，可以使用以下命令：
+- 设置 root 用户密码。如果尚未设置，可以使用以下命令：
 
 ```bash
 sudo passwd root
@@ -293,7 +295,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 ```
 
-此时，Docker 会下载测试镜像并在容器中运行，运行成功后它会打印一条确认消息并退出。
+执行命令后，Docker 会下载测试镜像并在容器中运行，运行成功后它会打印一条确认消息并退出。
 
 现在，我们已经在服务器上完成了 Docker 的安装。
 
@@ -361,6 +363,8 @@ scp file-name.key root@your-server-ip:/etc/nginx/certs/
 打开该文件，并修改为以下内容：
 
 ```nginx
+# 需要将 **your-domain** 替换为你的域名，**file-name** 替换为你的证书文件名。
+
 server {
         # SSL configuration
         #
@@ -403,11 +407,9 @@ server {
 }
 ```
 
-注意，配置中的 **your-domain** 需要替换为你的域名，**file-name** 需要替换为你的证书文件名。
-
 我们在配置中监听了 80 端口（http 协议的默认端口），和 443 端口（https 协议的默认端口）。
 
-80 端口主要用于将 http 请求重定向到 443 端口，443 端口用于处理请求。
+80 端口主要用于将 http 请求重定向到 443 端口，443 端口主要用于处理请求。
 
 在 443 端口，我们配置了 HTTPS 和 HTTP/2 支持。并在 **location /** 配置项中，将请求代理到本地 3000 端口，之后我们会在这个端口上运行 Docker 容器。
 
@@ -426,7 +428,7 @@ nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
 
-接着，我们重启 Nginx 服务：
+最后，我们重启 Nginx 服务：
 
 ```bash
 sudo systemctl restart nginx
@@ -436,11 +438,11 @@ sudo systemctl restart nginx
 
 ### 手动部署
 
-你可以在本地构建镜像，然后上传到服务器，接着在服务器上运行镜像。
+你可以在本地构建镜像，并上传到服务器，然后在服务器上运行容器。
 
 #### 本地构建镜像
 
-在项目根目录下，运行以下命令：
+在项目根目录下，执行以下命令：
 
 ```bash
 docker build -t nextjs-app .
@@ -448,7 +450,7 @@ docker build -t nextjs-app .
 
 #### 导出镜像
 
-构建完成后，通过 **docker save** 命令将镜像导出至本地：
+构建完成后，执行以下命令将镜像导出至本地：
 
 ```bash
 docker save -o nextjs-app.tar nextjs-app
@@ -461,20 +463,19 @@ docker save -o nextjs-app.tar nextjs-app
 接着，我们通过 **scp** 命令将镜像上传到服务器：
 
 ```bash
+# 需要将 your-server-ip 替换为你的服务器公网 IP
 scp nextjs-app.tar root@your-server-ip:/var/www/nextjs-app
 ```
 
-注意，你需要将 **your-server-ip** 替换为你的服务器公网 IP。
-
 #### 载入镜像
 
-上传完成后，我们在服务器上，通过 **docker load** 命令将镜像载入：
+上传完成后，我们在服务器上，执行以下命令将镜像载入：
 
 ```bash
 docker load -i /var/www/nextjs-app/nextjs-app.tar
 ```
 
-载入完成后，你可以通过 **docker images** 命令查看镜像是否载入成功：
+载入完成后，你可以执行以下命令查看镜像是否载入成功：
 
 ```bash
 docker images
@@ -484,19 +485,19 @@ docker images
 
 #### 运行容器
 
-载入完成后，我们就可以通过 **docker run** 命令来运行容器：
+载入完成后，我们就可以执行以下命令来运行容器：
 
 ```bash
 docker run -d --name nextjs-app -p 3000:3000 nextjs-app
 ```
 
-运行成功后，你可以通过 **docker ps** 命令查看容器是否运行成功：
+运行完成后，你可以执行以下命令来查看容器是否运行成功：
 
 ```bash
 docker ps
 ```
 
-如果看到 **nextjs-app** 容器，那么说明容器运行成功。
+如果看到 **nextjs-app** 容器，那么说明容器已经成功运行。
 
 此时，你就可以通过你的域名访问到 NextJS 应用了。
 
@@ -633,7 +634,7 @@ jobs:
 3. 输入名称，并填写对应的值
 4. 重复以上步骤，配置所有需要的 secrets
 
-这里我们暂时还没有 SSH 密钥，接下来我们就来生成 SSH 密钥。
+这里我们暂时还没有 SSH 密钥，接下来我们就在本地生成 SSH 密钥。
 
 ##### 生成 SSH 密钥
 
@@ -653,7 +654,7 @@ ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
 
 执行该命令后，系统会提示你选择存储密钥的位置，通常使用默认的即可。
 
--C 一般用于添加注释，一般是使用你的电子邮件。
+-C 标志符，用于添加注释，一般是使用你的电子邮件。
 
 现在，你可以在 **~/.ssh** 目录下看到生成的两个密钥文件：
 
@@ -663,10 +664,11 @@ ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
 接着，执行以下命令，将公钥添加到服务器已授权的密钥列表中：
 
 ```bash
-cat ~/.ssh/id_rsa.pub | ssh root@your-server-ip 'cat >> .ssh/authorized_keys'
+# 需要将 your-server-ip 替换为你的服务器公网 IP
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@your-server-ip
 ```
 
-**your-server-ip** 需要替换为你的服务器公网 IP。
+现在，你在本地使用命令连接服务器时，就不需要输入密码了。
 
 最后，执行以下命令：
 
@@ -674,11 +676,11 @@ cat ~/.ssh/id_rsa.pub | ssh root@your-server-ip 'cat >> .ssh/authorized_keys'
 cat ~/.ssh/id_rsa
 ```
 
-并复制输出的内容，作为 SSH_PRIVATE_KEY 的值，添加到 Github 仓库的 Secrets 中。
+复制输出的内容，作为 SSH_PRIVATE_KEY 的值，添加到 Github 仓库的 Secrets 中。
 
 ##### 触发工作流
 
-首先将你本地的代码推送到 Github 仓库，然后进入仓库的 Actions 页面，点击 Run workflow 按钮，就能触发工作流。
+首先，你需要将本地的代码推送到 Github 仓库，然后进入仓库的 Actions 页面，点击 Run workflow 按钮，就能触发工作流。
 
 工作流触发后，你可以在 Actions 页面看到工作流的执行情况。
 
