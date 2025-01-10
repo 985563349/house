@@ -219,9 +219,7 @@ docker run -p 3000:3000 nextjs-app
 这里，我们以阿里云 Ubuntu 22.04 LTS 为例：
 
 - 在控制台中，找到你的云服务器，然后点击远程连接并立即登录。
-
 - 登录服务器后，打开 **/etc/ssh/sshd_config** 文件：
-
 - 找到 **PasswordAuthentication** 配置项，并将其值改为 **yes**：
 
 ```bash
@@ -363,7 +361,7 @@ scp file-name.key root@your-server-ip:/etc/nginx/certs/
 打开该文件，并修改为以下内容：
 
 ```nginx
-# 需要将 **your-domain** 替换为你的域名，**file-name** 替换为你的证书文件名。
+# 需要将 your-domain 替换为你的域名，file-name 替换为你的证书文件名。
 
 server {
         # SSL configuration
@@ -656,7 +654,7 @@ ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
 
 -C 标志符，用于添加注释，一般是使用你的电子邮件。
 
-现在，你可以在 **~/.ssh** 目录下看到生成的两个密钥文件：
+现在，你可以在 **\~/.ssh** 目录下看到生成的两个密钥文件：
 
 - **id_rsa**：私钥
 - **id_rsa.pub**：公钥
