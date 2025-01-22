@@ -55,7 +55,7 @@ NextJS 官方提供了多种部署方式，包括：
 - 设置 **headers**，如果你使用了[流式响应](https://nextjs.org/docs/app/building-your-application/routing/loading-ui-and-streaming)，那么需要设置 **X-Accel-Buffering 为 no**，这样可以避免 Nginx 的响应缓存。
 
 ```ts
-// title: next.config.ts
+// title next.config.ts
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
