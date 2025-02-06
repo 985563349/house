@@ -1,14 +1,16 @@
 export type ArrowCardProps = {
   title?: React.ReactNode;
   description?: React.ReactNode;
+  extra?: React.ReactNode;
 };
 
-const ArrowCard: React.FC<ArrowCardProps> = ({ title, description }) => {
+const ArrowCard: React.FC<ArrowCardProps> = ({ title, description, extra }) => {
   return (
-    <div className="relative group flex flex-nowrap p-4 pr-10 rounded-lg border border-black/15 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-[background-color] duration-300 ease-in-out">
-      <div className="flex flex-col flex-1 truncate">
-        <p className="font-semibold">{title}</p>
-        <p className="text-sm">{description}</p>
+    <div className="relative group flex flex-nowrap p-4 pr-10 rounded-lg border dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-[background-color] duration-300 ease-in-out">
+      <div className="flex-1 flex flex-col items-start gap-2 truncate">
+        <p className="max-w-full font-semibold truncate">{title}</p>
+        {description && <p className="max-w-full text-sm truncate">{description}</p>}
+        {extra}
       </div>
       <svg
         xmlns="http://www.w3.org/2000/svg"

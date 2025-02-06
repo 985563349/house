@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import { ViewTransitions } from 'next-view-transitions';
 import { Inter } from 'next/font/google';
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import ThemeProvider from '@/providers/theme';
 import { cn } from '@/lib/utils';
 
-import Providers from './providers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,21 +20,27 @@ export const metadata: Metadata = {
   authors: [{ name: 'Jee' }],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning className="size-full">
-      <body
-        className={cn(
-          'flex flex-col antialiased size-full text-gray-950 dark:text-gray-100 bg-white dark:bg-gray-950',
-          inter.className
-        )}
-      >
-        <Providers>
-          <Header />
-          <main className="flex-1 py-10">{children}</main>
-          <Footer />
-        </Providers>
-      </body>
-    </html>
+    <ViewTransitions>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={cn(
+            'grid grid-rows-[auto_1fr_auto] min-h-screen antialiased bg-white dark:bg-gray-950 overflow-auto',
+            inter.className
+          )}
+        >
+          <ThemeProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

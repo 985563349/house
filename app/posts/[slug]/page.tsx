@@ -1,15 +1,19 @@
 import { format } from 'date-fns';
 
 import Markdown from '@/components/markdown';
-import BackTo from '@/components/back-to';
 import { readingTime } from '@/lib/utils';
 import client from '@/tina/__generated__/client';
+import BackLink from '@/components/back-link';
 
 export const revalidate = 3600; // invalidate every hour
 
 export const dynamicParams = true;
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
 
@@ -30,27 +34,39 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function Post({ params }: { params: Promise<{ slug: string }> }) {
+export default async function Post({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
 
   return (
-    <div className="mx-auto max-w-screen-md px-5">
-      <BackTo href="/posts">返回文章</BackTo>
+    <div className="mx-auto max-w-screen-lg px-8 py-10">
+      <div className="mb-10">
+        <h1 className="mb-4 text-3xl font-semibold">{data.post.title}</h1>
 
-      <div className="space-y-3 my-10">
         <div className="flex items-center gap-2 text-sm">
-          <time dateTime={data.post.date}>{format(new Date(data.post.date), 'yyyy-MM-dd')}</time>
+          <time dateTime={data.post.date}>
+            {format(new Date(data.post.date), 'yyyy-MM-dd')}
+          </time>
           &bull;
-          <span>阅读时间 {readingTime(JSON.stringify(data.post.body))} 分钟</span>
+          <span>
+            阅读时间 {readingTime(JSON.stringify(data.post.body))} 分钟
+          </span>
         </div>
-
-        <h1 className="text-3xl font-semibold text-black dark:text-white">{data.post.title}</h1>
       </div>
 
-      <article className="">
+      <section className="prose dark:prose-invert">
         <Markdown content={data.post.body} />
-      </article>
+      </section>
+
+      <p className="my-10 text-gray-500 dark:text-gray-400">
+        # {data.post.topic?.name}
+      </p>
+
+      <BackLink />
     </div>
   );
 }

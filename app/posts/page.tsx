@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 
 import ArrowCard from '@/components/arrow-card';
 import client from '@/tina/__generated__/client';
@@ -27,30 +27,43 @@ export default async function Posts() {
     return acc;
   }, {} as Record<string, PostConnectionQuery['postConnection']['edges']>);
 
-  const years = Object.keys(posts ?? {}).sort((a, b) => parseInt(b) - parseInt(a));
+  const years = Object.keys(posts ?? {}).sort(
+    (a, b) => parseInt(b) - parseInt(a)
+  );
 
   return (
-    <div className="mx-auto max-w-screen-md px-5">
-      <div className="space-y-10">
-        <div className="font-semibold text-black dark:text-white">文章</div>
+    <div className="mx-auto max-w-screen-lg px-8 py-10">
+      <h1 className="mb-10 text-3xl font-semibold">文章</h1>
 
-        <div className="space-y-8">
-          {years.map((year) => (
-            <section className="space-y-4" key={year}>
-              <div className="font-semibold text-black dark:text-white">{year}</div>
+      <div className="space-y-8">
+        {years.map((year) => (
+          <section className="space-y-4" key={year}>
+            <div className="text-sm font-semibold text-black dark:text-white">
+              {year}
+            </div>
 
-              <ul className="flex flex-col gap-4">
-                {posts?.[year]?.map((post) => (
-                  <li key={post?.node?.id}>
-                    <Link href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}>
-                      <ArrowCard title={post?.node?.title} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {posts?.[year]?.map((post) => (
+                <li key={post?.node?.id}>
+                  <Link
+                    href={`/posts/${post?.node?._sys.breadcrumbs.join('/')}`}
+                  >
+                    <ArrowCard
+                      title={post?.node?.title}
+                      extra={
+                        post?.node?.topic && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            # {post.node.topic.name}
+                          </p>
+                        )
+                      }
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </div>
   );
