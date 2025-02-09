@@ -49,7 +49,7 @@ export default async function Post({
 
         <div className="flex items-center gap-2 text-sm">
           <time dateTime={data.post.date}>
-            {format(new Date(data.post.date), 'yyyy-MM-dd')}
+            {format(new Date(data.post.date), 'yyyy 年 MM 月 dd')}
           </time>
           &bull;
           <span>
@@ -58,7 +58,7 @@ export default async function Post({
         </div>
       </div>
 
-      <section className="prose dark:prose-invert">
+      <section className="slide-enter-content prose dark:prose-invert">
         <Markdown content={data.post.body} />
       </section>
 

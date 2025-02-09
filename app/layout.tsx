@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { ViewTransitions } from 'next-view-transitions';
 import { Inter } from 'next/font/google';
 
 import Header from '@/components/header';
@@ -14,9 +13,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: {
     template: '%s - Jee',
-    default: 'Jee 的数字花园',
+    default: 'Jee Wong',
   },
-  description: "Jee's digital garden",
+  description: 'Jee Wong',
   authors: [{ name: 'Jee' }],
 };
 
@@ -26,21 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ViewTransitions>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={cn(
-            'grid grid-rows-[auto_1fr_auto] min-h-screen antialiased bg-white dark:bg-gray-950 overflow-auto',
-            inter.className
-          )}
-        >
-          <ThemeProvider>
-            <Header />
-            <main>{children}</main>
-            <Footer />
-          </ThemeProvider>
-        </body>
-      </html>
-    </ViewTransitions>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          'grid grid-rows-[auto_1fr_auto] min-h-screen antialiased bg-white dark:bg-gray-950 overflow-auto',
+          inter.className
+        )}
+      >
+        <ThemeProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

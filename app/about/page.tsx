@@ -5,7 +5,7 @@ export default function About() {
     <div className="mx-auto max-w-screen-lg px-8 py-10">
       <h1 className="mb-10 text-3xl font-semibold">关于</h1>
 
-      <div className="prose dark:prose-invert space-y-10">
+      <div className="slide-enter-content prose dark:prose-invert space-y-10">
         <section>
           <h3>我是谁</h3>
           <p>
@@ -17,7 +17,7 @@ export default function About() {
         <section>
           <h3>我在做什么</h3>
           <p>
-            目前正在学习 Expo，以及开发一个小程序组件库，偶尔还会写一些文章。
+            目前我正在学习如何使用 Expo 开发移动应用，空闲时也会写一些文章。
           </p>
         </section>
 
@@ -94,7 +94,7 @@ export default function About() {
               <li>
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--threejs-dark] dark:hidden" />
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--threejs-light] hidden dark:inline-block" />
-                ThreeJS，用过，处于入门阶段。
+                ThreeJS，用过，还在新手期。
               </li>
             </ul>
           </div>
@@ -116,7 +116,7 @@ export default function About() {
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--supabase-light] hidden dark:inline-block" />
                 Supabase、
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--prisma]" />
-                Prisma，会用 ORM 框架，能写简单的 SQL 语句。
+                Prisma，能写简单的 SQL，主要用 ORM 框架。
               </li>
 
               <li>
@@ -142,13 +142,13 @@ export default function About() {
               <li>
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--vscode-dark] dark:hidden" />
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--vscode-light] hidden dark:inline-block" />
-                VSCode，最常用的编辑器。
+                VSCode，我从小用到大。
               </li>
 
               <li>
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--vim-dark] dark:hidden" />
                 <i className="mr-1 translate-y-0.5 icon-[skill-icons--vim-light] hidden dark:inline-block" />
-                Vim，会用，喜欢用。
+                Vim，好玩，爱玩。
               </li>
             </ul>
           </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Link } from 'next-view-transitions';
+import Link from 'next/link';
 
 import ArrowCard from '@/components/arrow-card';
 import client from '@/tina/__generated__/client';
@@ -35,7 +35,7 @@ export default async function Posts() {
     <div className="mx-auto max-w-screen-lg px-8 py-10">
       <h1 className="mb-10 text-3xl font-semibold">文章</h1>
 
-      <div className="space-y-8">
+      <div className="slide-enter-content space-y-8">
         {years.map((year) => (
           <section className="space-y-4" key={year}>
             <div className="text-sm font-semibold text-black dark:text-white">
@@ -53,7 +53,7 @@ export default async function Posts() {
                       extra={
                         post?.node?.topic && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            # {post.node.topic.name}
+                            <span># {post.node.topic.name}</span>
                           </p>
                         )
                       }
