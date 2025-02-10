@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'grid grid-rows-[auto_1fr_auto] min-h-screen antialiased bg-white dark:bg-gray-950 overflow-auto',
+          'grid grid-cols-1 grid-rows-[auto_1fr_auto] min-h-screen antialiased bg-white dark:bg-gray-950',
           inter.className
         )}
       >

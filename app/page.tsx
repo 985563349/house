@@ -4,7 +4,7 @@ import TypeAnimation from '@/components/type-animation';
 
 export default function Home() {
   return (
-    <div className="flex items-center justify-center mx-auto max-w-screen-lg px-8 py-10 min-h-full">
+    <div className="flex items-center justify-center mx-auto px-8 py-10 max-w-screen-lg min-h-full">
       <section>
         <div className="slide-enter-content flex flex-col items-center gap-6 mx-auto max-w-3xl text-center">
           <Image
