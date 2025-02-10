@@ -24,7 +24,7 @@ export default function Home() {
           <p className="text-4xl font-semibold">
             一个 Web 开发者 · 终身学习者 · 游戏爱好者
           </p>
-          <p>我喜欢学习新的技术和框架，目前正在寻在新的工作机会 👨‍💻。</p>
+          <p>我喜欢学习新的技术和框架，目前正在寻找新的工作机会 👨‍💻。</p>
         </div>
       </section>
     </div>
