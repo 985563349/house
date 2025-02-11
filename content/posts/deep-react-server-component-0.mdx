@@ -225,7 +225,7 @@ export default function Comments() {
 
 因此，网络请求的流程大致如下：
 
-![client-component-request-flow](/client-component-request-flow.png "传统组件的网络请求")
+![client-component-request-flow](/client-component-request-flow.png '传统组件的网络请求')
 
 而使用服务器组件，数据获取和组件渲染都在服务端完成，客户端只需要一次请求往返，就可以获得全部的内容。
 
@@ -275,22 +275,22 @@ export default async function Comments() {
 
 改为服务器组件后，网络请求的流程大致如下：
 
-![server-component-request-flow](/server-component-request-flow.png "服务器组件的网络请求")
+![server-component-request-flow](/server-component-request-flow.png '服务器组件的网络请求')
 
 我们可以明显看到，客户端的请求往返次数减少了。随着页面组件的复杂度增加，这个优势会越来越明显。
 
 #### 缓存
 
-服务队组件可以缓存运行的结果，这些结果能在后续请求中重用，并且跨不同客户端共享。这样可以减少服务器的压力，提高响应速度。
+服务器组件可以缓存运行的结果，这些结果能在后续请求中重用，并且跨不同客户端共享。这样可以减少服务器的压力，提高响应速度。
 
 ### 服务器组件的限制
 
-由于服务器组件仅在服务器端执行，且不会在客户端重新渲染，因此它存在以下几个关键的限制：
+由于服务器组件仅在服务端执行，且不会在客户端重新渲染，因此它存在以下几个关键的限制：
 
-* **不能存在状态**：不能使用 **useState**、**useReducer**、**useRef** 和 **useContext** 等存在状态的 hook。
-* **不能存在副作用**：不能使用 **useEffect**、**useLayoutEffect** 等定义副作用的 hook。
-* **不能定义事件处理**：不能使用 **onClick**、**onChange** 等定义事件处理程序。
-* **不能访问浏览器 API**：不能访问 **document**、**window** 等仅在浏览器中存在的 API。
+- **不能存在状态**：不能使用 **useState**、**useReducer**、**useRef** 和 **useContext** 等存在状态的 hook。
+- **不能存在副作用**：不能使用 **useEffect**、**useLayoutEffect** 等定义副作用的 hook。
+- **不能定义事件处理**：不能使用 **onClick**、**onChange** 等定义事件处理程序。
+- **不能访问浏览器 API**：不能访问 **document**、**window** 等仅在浏览器中存在的 API。
 
 这些限制看起来好像令人生畏，但其实我们并不需要刻意去记忆。即使在开发过程中不小心违反了这些限制，React 也会通过清晰的错误提示来帮助我们及时发现和修正。
 

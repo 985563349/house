@@ -41,13 +41,9 @@ export default async function Post({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { data, errors } = await client.queries.post({
+  const { data } = await client.queries.post({
     relativePath: `${slug}.mdx`,
   });
-
-  if (errors) {
-    return notFound();
-  }
 
   return (
     <div className="mx-auto max-w-screen-lg px-8 py-10">
