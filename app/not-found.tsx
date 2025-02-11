@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
+
 import BackLink from '@/components/back-link';
 import TypeAnimation from '@/components/type-animation';
+
+export const metadata: Metadata = {
+  title: '404',
+};
 
 export default function NotFound() {
   return (

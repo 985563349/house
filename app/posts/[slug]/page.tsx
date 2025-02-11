@@ -1,9 +1,10 @@
+import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 
 import Markdown from '@/components/markdown';
+import BackLink from '@/components/back-link';
 import { readingTime } from '@/lib/utils';
 import client from '@/tina/__generated__/client';
-import BackLink from '@/components/back-link';
 
 export const revalidate = 3600; // invalidate every hour
 
@@ -40,7 +41,13 @@ export default async function Post({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
+  const { data, errors } = await client.queries.post({
+    relativePath: `${slug}.mdx`,
+  });
+
+  if (errors) {
+    return notFound();
+  }
 
   return (
     <div className="mx-auto max-w-screen-lg px-8 py-10">
