@@ -1,0 +1,34 @@
+---
+title: NodeJS 获取 Git 变更文件
+topic: content/topics/node-js.mdx
+date: 2024-02-27T16:00:00.000Z
+draft: false
+---
+
+在 NodeJS 中获取 Git 仓库的变更文件列表非常实用。
+
+比如，你可能希望在特定文件发生变化时触发脚本，或在进行增量更新时，仅处理已更改的文件。
+
+我们可以通过编写一个简单的函数来实现这个功能：
+
+```typescript
+import { execSync } from 'child_process';
+
+function getChangedFiles(extension: string = '') {
+  const filter = extension ? `-- '***.${extension}'` : '';
+  const command = `git diff HEAD^ HEAD --name-only ${filter}`;
+  const diffOutput = execSync().toString(command);
+
+  return diffOutput.toString().split('\n').filter(Boolean);
+}
+```
+
+该函数使用 **execSync** 来执行 **git diff** 命令，并提供了一个可选 extension 参数，用于过滤出对应后缀的文件。
+
+此时，如果我们想要检索出已更改的 .mdx 文件列表，可以像这样调用该函数：
+
+```typescript
+const changedFiles = getChangedFiles('mdx');
+```
+
+函数执行成功后，将返回本次提交所有变更的 .mdx 文件， 其路径从当前目录开始。
