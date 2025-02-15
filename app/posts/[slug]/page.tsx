@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 
 import Markdown from '@/components/markdown';
@@ -24,7 +23,11 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  const { data } = await client.queries.postConnection();
+  const { data } = await client.queries.postConnection({
+    first: 10,
+    sort: 'date',
+    filter: { draft: { eq: false } },
+  });
 
   if (!data.postConnection.edges) {
     return [];

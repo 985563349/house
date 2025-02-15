@@ -1,5 +1,5 @@
 ---
-title: 【译】NextJS 增量静态再生（ISR）完整指南
+title: NextJS 增量静态再生（ISR）完整指南
 topic: content/topics/next-js.mdx
 date: 2024-03-21T16:00:00.000Z
 draft: false
@@ -21,7 +21,7 @@ Jamstack 背后的理念非常吸引人：预先渲染的静态页面可以推�
 
 如果你在构建大型静态网站时采用了 Jamstack 架构，你可能需要等待数小时才能完成网站构建。如果页面数量增加一倍，构建时间也会增加一倍。让我们来看看 [Target.com](https://www.target.com)。有可能每次部署都静态生成数百万个产品页面吗？
 
-![build-times-regeneration](/build-times-regeneration-nextjs.png "build-times-regeneration")
+![build-times-regeneration](/build-times-regeneration-nextjs.png 'build-times-regeneration')
 
 静态网站生成的问题：由于创建时间与页面数量呈线性关系，因此你可能需要[等待数小时](https://css-tricks.com/comparing-static-site-generator-build-times)才能创建网站。
 
@@ -43,10 +43,10 @@ Jamstack 背后的理念非常吸引人：预先渲染的静态页面可以推�
 
 考虑到之前的电子商务商店有 100,000 种产品。以 50ms 静态生成每个产品页面计算，**如果没有 ISR，这将需要近 2 个小时**。有了 ISR，我们可以选择：
 
-* **更快的构建**：在构建时生成最受欢迎的 1,000 种产品。对其他产品的请求将导致缓存缺失，并按需静态生成（1 分钟构建）。
-* **更高的缓存命中率**：在构建时生成 10,000 个产品，确保用户在请求之前缓存更多的产品（8 分钟构建）。
+- **更快的构建**：在构建时生成最受欢迎的 1,000 种产品。对其他产品的请求将导致缓存缺失，并按需静态生成（1 分钟构建）。
+- **更高的缓存命中率**：在构建时生成 10,000 个产品，确保用户在请求之前缓存更多的产品（8 分钟构建）。
 
-![generation-regeneration](/generation-regeneration-nextjs.png "generation-regeneration")
+![generation-regeneration](/generation-regeneration-nextjs.png 'generation-regeneration')
 
 ISR 的优势：你可以灵活选择在构建时或按需生成哪些页面。可以选择 (A) 更快的构建或 (B) 更多的缓存。
 
@@ -60,7 +60,7 @@ ISR 的优势：你可以灵活选择在构建时或按需生成哪些页面。�
 
 增量静态再生的请求流程图：
 
-![regeneration-regeneration](/regeneration-regeneration-nextjs.png "regeneration-regeneration")
+![regeneration-regeneration](/regeneration-regeneration-nextjs.png 'regeneration-regeneration')
 
 1. Next.js 可以定义每个页面的重新验证时间。我们将其设置为 60 秒。
 2. 对产品页面的初始请求将显示带有原始价格的缓存页面。
@@ -88,9 +88,9 @@ Next.js 定义了哪些产品在构建时生成，哪些按需生成。通过向
 
 我们需要配置 Next.js 在初始构建后请求其他产品时的 "fallback" 方式。有三个选项可供选择：**false**、**true** 和 **blocking**。
 
-* **false**（默认）：当请求指向一个尚未生成的页面时，返回 404 页面。如果要创建的路径数量较少，或者不经常添加新的页面数据，则此选项非常有用。
-* **true**：当请求指向一个尚未生成的页面时，Next.js 会在第一次请求时立即提供一个处于加载状态的静态页面。数据加载完成后，页面将使用新数据重新渲染并缓存。
-* **blocking**（首选）：当请求指向一个尚未生成的页面时，Next.js 将在第一次请求时服务端渲染该页面。以后的请求将从缓存中获取静态文件。
+- **false**（默认）：当请求指向一个尚未生成的页面时，返回 404 页面。如果要创建的路径数量较少，或者不经常添加新的页面数据，则此选项非常有用。
+- **true**：当请求指向一个尚未生成的页面时，Next.js 会在第一次请求时立即提供一个处于加载状态的静态页面。数据加载完成后，页面将使用新数据重新渲染并缓存。
+- **blocking**（首选）：当请求指向一个尚未生成的页面时，Next.js 将在第一次请求时服务端渲染该页面。以后的请求将从缓存中获取静态文件。
 
 ```javascript
 // title pages/products/[id].js
@@ -111,8 +111,8 @@ export async function getStaticPaths() {
 
 从 [Next.js 12.2.0](https://nextjs.org/blog/next-12-2#on-demand-incremental-static-regeneration-stable)开始，Next.js 支持按需增量静态再生，可手动清除特定页面的 Next.js 缓存。这样就能在以下情况下更轻松地更新网站：
 
-* 创建或更新 Headless CMS 中的内容
-* 电子商务元数据更改（价格、描述、类别、评论等）
+- 创建或更新 Headless CMS 中的内容
+- 电子商务元数据更改（价格、描述、类别、评论等）
 
 在 **getStaticProps** 中，无需指定 **revalidate** 即可使用按需重新验证。如果省略 **revalidate**，Next.js 将使用默认值 **false** （无重验证），只有在调用 **revalidate( )** 时才会按需重新验证页面。
 
@@ -186,13 +186,13 @@ SSR 和边缘缓存与 ISR 类似（尤其是在使用 **stale-while-revalidate*
 
 下面是一个使用 ISR 还原代码的示例：
 
-* 你推送代码并获得部署 ID 123。
-* 你的页面包含一个错别字 "Smshng Magazine"。
-* 你在 CMS 中更新了页面，无需重新部署。
-* 一旦页面显示 "Smshng Magazine"，它就会被持久化存储。
-* 你推送了一些错误代码，部署 ID 为 345.
-* 你回滚到部署 ID 123。
-* 你仍然可以看到 "Smshng Magazine"。
+- 你推送代码并获得部署 ID 123。
+- 你的页面包含一个错别字 "Smshng Magazine"。
+- 你在 CMS 中更新了页面，无需重新部署。
+- 一旦页面显示 "Smshng Magazine"，它就会被持久化存储。
+- 你推送了一些错误代码，部署 ID 为 345.
+- 你回滚到部署 ID 123。
+- 你仍然可以看到 "Smshng Magazine"。
 
 还原和持久化静态页面不在 Next.js 的范围内，取决于你的托管服务提供商。请注意，ISR 不同于使用 **Cache-Control** 标头的服务端渲染，因为根据设计，缓存会过期。它们不会跨区域共享，并会在还原时被清除。
 
@@ -200,9 +200,9 @@ SSR 和边缘缓存与 ISR 类似（尤其是在使用 **stale-while-revalidate*
 
 增量静态再生技术适用于电子商务、营销页面、博客文章、广告支持媒体等。
 
-* [E-commerce Demo](https://vercel.com/templates/next.js/nextjs-commerce)：Next.js Commerce 是高性能电子商务网站的入门模板。
-* [GitHub Reactions Demo](https://reactions-demo.vercel.app)：监听 GitHub issue，并使用 ISR 更新界面。
-* [Static Tweets Demo](https://static-tweet.vercel.app)：该项目可在 30 秒内完成部署，可使用 ISR 按需静态生成 500M tweets。
+- [E-commerce Demo](https://vercel.com/templates/next.js/nextjs-commerce)：Next.js Commerce 是高性能电子商务网站的入门模板。
+- [GitHub Reactions Demo](https://reactions-demo.vercel.app)：监听 GitHub issue，并使用 ISR 更新界面。
+- [Static Tweets Demo](https://static-tweet.vercel.app)：该项目可在 30 秒内完成部署，可使用 ISR 按需静态生成 500M tweets。
 
 ## 理解学习 Next.js
 
@@ -214,8 +214,8 @@ Next.js 转为逐步采用而设计。使用 Next.js，你可以继续使用现�
 
 ## 进一步阅读
 
-* [开始使用 Next.js](https://www.smashingmagazine.com/2020/10/getting-started-with-next-js)
-* [比较 Next.js 中的样式方法](https://www.smashingmagazine.com/2020/09/comparison-styling-methods-next-js)
-* [如何使用 Next.js API 路由构建 GraphQL 服务器](https://www.smashingmagazine.com/2020/10/graphql-server-next-javascript-api-routes)
+- [开始使用 Next.js](https://www.smashingmagazine.com/2020/10/getting-started-with-next-js)
+- [比较 Next.js 中的样式方法](https://www.smashingmagazine.com/2020/09/comparison-styling-methods-next-js)
+- [如何使用 Next.js API 路由构建 GraphQL 服务器](https://www.smashingmagazine.com/2020/10/graphql-server-next-javascript-api-routes)
 
 感谢 Lee Robinson。
