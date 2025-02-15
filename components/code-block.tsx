@@ -15,7 +15,9 @@ const highlight: Extension = {
   name: 'highlight',
   MultilineAnnotation: ({ children }) => {
     return (
-      <span className="block border-l-2 border-blue-500 bg-black bg-opacity-5 dark:bg-opacity-50">{children}</span>
+      <span className="block border-l-2 border-blue-500 bg-black bg-opacity-5 dark:bg-opacity-50">
+        {children}
+      </span>
     );
   },
 };
@@ -51,12 +53,16 @@ const getLightIcon = themeIcons({
 const fileIcons: Extension = {
   name: 'fileIcons',
   TabContent: ({ title = '', colors }) => {
-    const { svg, color } = colors.colorScheme === 'dark' ? getDarkIcon(title) : getLightIcon(title);
+    const { svg, color } =
+      colors.colorScheme === 'dark' ? getDarkIcon(title) : getLightIcon(title);
     const __html = svg.replace(/svg/, `svg fill='${color}'`);
 
     return (
       <div className="flex items-center h-[1.5em] -ml-[8px]">
-        <span className="inline-block w-[2em] h-[2em] -my-[0.5em]" dangerouslySetInnerHTML={{ __html }} />
+        <span
+          className="inline-block w-[2em] h-[2em] -my-[0.5em]"
+          dangerouslySetInnerHTML={{ __html }}
+        />
         {title}
       </div>
     );
@@ -65,7 +71,9 @@ const fileIcons: Extension = {
 
 const focus: Extension = {
   name: 'focus',
-  MultilineAnnotation: ({ children }) => <div className="contrast-0">{children}</div>,
+  MultilineAnnotation: ({ children }) => (
+    <div className="contrast-0">{children}</div>
+  ),
   beforeHighlight: (props, focusAnnotations) => {
     if (focusAnnotations.length === 0) return props;
 
@@ -79,18 +87,30 @@ const focus: Extension = {
       const { fromLineNumber, toLineNumber } = range;
 
       newRanges = newRanges.flatMap((r) => {
-        if (r.fromLineNumber > toLineNumber || r.toLineNumber < fromLineNumber) return [r];
+        if (r.fromLineNumber > toLineNumber || r.toLineNumber < fromLineNumber)
+          return [r];
 
         if (r.fromLineNumber < fromLineNumber && r.toLineNumber > toLineNumber)
           return [
-            { fromLineNumber: r.fromLineNumber, toLineNumber: fromLineNumber - 1 },
+            {
+              fromLineNumber: r.fromLineNumber,
+              toLineNumber: fromLineNumber - 1,
+            },
             { fromLineNumber: toLineNumber + 1, toLineNumber: r.toLineNumber },
           ];
 
         if (r.fromLineNumber < fromLineNumber)
-          return [{ fromLineNumber: r.fromLineNumber, toLineNumber: fromLineNumber - 1 }];
+          return [
+            {
+              fromLineNumber: r.fromLineNumber,
+              toLineNumber: fromLineNumber - 1,
+            },
+          ];
 
-        if (r.toLineNumber > toLineNumber) return [{ fromLineNumber: toLineNumber + 1, toLineNumber: r.toLineNumber }];
+        if (r.toLineNumber > toLineNumber)
+          return [
+            { fromLineNumber: toLineNumber + 1, toLineNumber: r.toLineNumber },
+          ];
 
         return [];
       });
@@ -110,19 +130,21 @@ export type CodeBlockProps = {
 
 const CodeBlock: React.FC<CodeBlockProps> = (props) => {
   return (
-    <Code
-      className="border dark:border-none"
-      style={{ borderRadius: '0.375rem' }}
-      lang={props.lang}
-      theme={{
-        dark: 'github-dark',
-        light: 'github-light',
-        lightSelector: 'html.light',
-      }}
-      extensions={[title, highlight, fileIcons, focus]}
-    >
-      {props.value}
-    </Code>
+    <div className="code-block">
+      <Code
+        className="border dark:border-none"
+        style={{ borderRadius: '0.375rem' }}
+        lang={props.lang}
+        theme={{
+          dark: 'github-dark',
+          light: 'github-light',
+          lightSelector: 'html.light',
+        }}
+        extensions={[title, highlight, fileIcons, focus]}
+      >
+        {props.value}
+      </Code>
+    </div>
   );
 };
 
