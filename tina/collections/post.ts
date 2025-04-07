@@ -93,6 +93,29 @@ const post: Collection = {
           ],
         },
         {
+          name: 'Video',
+          label: 'Video',
+          match: {
+            start: '{%',
+            end: '%}',
+            name: 'video',
+          },
+          fields: [
+            {
+              name: 'type',
+              label: 'type',
+              type: 'string',
+              required: true,
+            },
+            {
+              name: 'src',
+              label: 'src',
+              type: 'string',
+              required: true,
+            },
+          ],
+        },
+        {
           name: 'Heading',
           label: 'Heading',
           fields: [
