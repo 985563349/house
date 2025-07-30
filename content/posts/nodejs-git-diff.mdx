@@ -12,6 +12,7 @@ draft: false
 我们可以通过编写一个简单的函数来实现这个功能：
 
 ```typescript
+// [!meta copy]
 import { execSync } from 'child_process';
 
 function getChangedFiles(extension: string = '') {
@@ -28,6 +29,7 @@ function getChangedFiles(extension: string = '') {
 此时，如果我们想要检索出已更改的 .mdx 文件列表，可以像这样调用该函数：
 
 ```typescript
+// [!meta copy]
 const changedFiles = getChangedFiles('mdx');
 ```
 

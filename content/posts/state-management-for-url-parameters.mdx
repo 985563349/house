@@ -58,7 +58,7 @@ https://www.example.com:8080/articles?id=123&sort=desc#section2
 首先，我们定义一个列表组件，它能通过一个名为 **useSearchParams** 的 hook 来获取 URL 中的参数，并根据参数请求相应的数据来渲染内容：
 
 ```tsx
-// title movie-list.tsx
+// [!meta title:movie-list.tsx copy]
 import { useEffect, useState } from 'react';
 import { useSearchParams } from '../hooks/use-search-params';
 
@@ -88,7 +88,7 @@ export const MovieList: React.FC = () => {
 接着，我们定义一个筛选组件，它能通过 **useSearchParams** 来修改 URL 参数，从而触发列表组件重新请求数据渲染：
 
 ```tsx
-// title genres-panel.tsx
+// [!meta title:genres-panel.tsx copy]
 import { useSearchParams } from '../hooks/use-search-params';
 
 export const GenresPanel: React.FC = () => {
@@ -110,9 +110,7 @@ export const GenresPanel: React.FC = () => {
                 ? genres.filter((genre) => genre !== value)
                 : [...genres, value];
 
-              setSearchParams(
-                newGenres.map((genre) => ['genre', genre] as [string, string])
-              );
+              setSearchParams(newGenres.map((genre) => ['genre', genre] as [string, string]));
             }}
           >
             {value}
@@ -127,7 +125,7 @@ export const GenresPanel: React.FC = () => {
 然后，我们在页面组件中引入并使用列表和筛选组件：
 
 ```tsx
-// title page.tsx
+// [!meta title:page.tsx copy]
 import { GenresPanel } from './components/genres-panel';
 import { MovieList } from './components/movie-list';
 
@@ -146,7 +144,7 @@ export function Page() {
 如果你在应用中使用了 **react-router-dom** 那么可以直接使用内置的 useSearchParams，效果是完全一样的。
 
 ```typescript
-// title use-search-params.ts
+// [!meta title:use-search-params.ts copy]
 import { useEffect, useRef, useState } from 'react';
 
 type ParamKeyValuePair = [string, string];
@@ -163,15 +161,11 @@ type SetURLSearchParams = (
 
 function createSearchParams(init: SearchParamsInit = '') {
   return new URLSearchParams(
-    typeof init === 'string' ||
-    Array.isArray(init) ||
-    init instanceof URLSearchParams
+    typeof init === 'string' || Array.isArray(init) || init instanceof URLSearchParams
       ? init
       : Object.keys(init).reduce((memo, key) => {
           const value = init[key];
-          return memo.concat(
-            Array.isArray(value) ? value.map((v) => [key, v]) : [[key, value]]
-          );
+          return memo.concat(Array.isArray(value) ? value.map((v) => [key, v]) : [[key, value]]);
         }, [] as ParamKeyValuePair[])
   );
 }

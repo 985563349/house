@@ -1,6 +1,5 @@
 import { defineConfig } from 'tinacms';
 
-import page from './collections/page';
 import post from './collections/post';
 import topic from './collections/topic';
 
@@ -10,8 +9,11 @@ const branch =
 
 export default defineConfig({
   branch,
-  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID, // Get this from tina.io
-  token: process.env.TINA_TOKEN, // Get this from tina.io
+  // Get this from tina.io
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID,
+
+  // Get this from tina.io
+  token: process.env.TINA_TOKEN,
 
   build: {
     outputFolder: 'admin',
@@ -24,6 +26,6 @@ export default defineConfig({
     },
   },
   schema: {
-    collections: [page, post, topic],
+    collections: [post, topic],
   },
 });

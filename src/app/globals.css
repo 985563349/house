@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.shiki {
+  @apply p-0;
+}
+
+.shiki code {
+  @apply block py-3;
+}
+
+.shiki .line {
+  @apply inline-block w-full px-4;
+}
+
+.shiki .highlighted {
+  @apply bg-slate-100 dark:bg-slate-800;
+}
+
+.shiki.has-focused .line {
+  @apply transition-[filter] duration-300 ease-in-out hover:blur-none;
+}
+
+.shiki.has-focused .line:not(.focused) {
+  @apply blur-xs;
+}
+
+.shiki.has-focused:hover .line {
+  @apply blur-none;
+}
+
+.shiki .error {
+  @apply bg-red-100 dark:bg-red-500/20;
+}
+
+.shiki .warning {
+  @apply bg-yellow-100 dark:bg-yellow-500/20;
+}
+
+.shiki .highlighted-word {
+  @apply border border-dashed rounded-md mx-0.5 px-1 py-0.5;
+}
+
+.shiki .add {
+  @apply relative bg-green-100 dark:bg-green-500/20;
+}
+
+.shiki .add::before {
+  @apply absolute left-1 content-["+"] text-green-500;
+}
+
+.shiki .remove {
+  @apply relative bg-red-100 dark:bg-red-500/20;
+}
+
+.shiki .remove::before {
+  @apply absolute left-1 content-["-"] text-red-500;
+}

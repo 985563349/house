@@ -1,5 +1,5 @@
 ---
-title: 如何公开 Docker 端口
+title: 译：如何公开 Docker 端口
 topic: content/topics/docker.mdx
 date: 2024-03-26T16:00:00.000Z
 draft: false
@@ -98,6 +98,7 @@ EXPOSE 80/udp
 有时，你可能想在启动容器时手动公开一个端口。这可以通过在 **docker run** 命令中加入 **--expose** 标志来实现。
 
 ```bash
+# [!meta title:bash copy]
 docker run my-container:latest --expose 80
 ```
 
@@ -119,6 +120,7 @@ docker run my-container:latest --expose 80
 下面是一个简单的 Dockerfile，它定义了一个带有公开端口的镜像：
 
 ```dockerfile
+# [!meta title:Dockerfile copy]
 FROM alpine:latest
 EXPOSE 80
 CMD ["sleep", "300"]
@@ -127,6 +129,7 @@ CMD ["sleep", "300"]
 创建镜像，然后从中启动一个容器：
 
 ```bash
+# [!meta title:bash copy]
 docker build -t demo-image:latest .
 docker run -d --name demo docker-image:latest
 ```
@@ -136,6 +139,7 @@ docker run -d --name demo docker-image:latest
 如果无法控制镜像的 Dockerfile，可以在启动容器时手动公开端口：
 
 ```bash
+# [!meta title:bash copy]
 docker run -d --name demo-run --expose 443 demo-image:latest
 ```
 
@@ -144,7 +148,7 @@ docker run -d --name demo-run --expose 443 demo-image:latest
 要查看容器公开的端口，请使用 **docker ps** 命令：
 
 ```bash
-# focus(1)
+# [!code focus]
 docker ps
 
 CONTAINER ID   IMAGE               COMMAND       CREATED              STATUS                  PORTS             NAMES
@@ -175,13 +179,14 @@ dd50cd05e515   demo-image:latest   "sleep 300"   About a minute ago   Up About a
 在外部流量到达容器之前，需要将公开的端口绑定到主机（通常是将容器的端口与主机的端口进行映射）。这可以使用 **docker run** 的 **-p** 标志来实现：
 
 ```bash
+# [!meta title:bash copy]
 docker run -d --name nginx -p 80:80 nginx:latest
 ```
 
 此示例将主机的 80 端口映射到容器内的 80 端口。然后，你就可以使用主机的网络接口访问容器化应用程序了：
 
 ```bash
-# focus(1)
+# [!code focus]
 curl http://localhost:80
 
 <!DOCTYPE html>
@@ -193,7 +198,7 @@ curl http://localhost:80
 绑定的端口会显示在 **docker ps** 命令输出的 **PORTS** 栏中。与只显示容器使用的端口号（如：80/tcp）的公开端口不同，已绑定的端口会显示主机端口和容器端口之间的映射：
 
 ```bash
-# focus(1)
+# [!code focus]
 docker ps
 
 CONTAINER ID   IMAGE          COMMAND                  CREATED             STATUS             PORTS                               NAMES
@@ -205,8 +210,9 @@ cafc1f042132   nginx:latest   "/docker-entrypoint.…"   About an hour ago   Up 
 从主机分配的端口不一定与容器监听的端口相同。在本示例中，你使用主机端口 8080 映射到容器端口 80：
 
 ```bash
-# focus(1:2)
+# [!code focus]
 docker run -d --name nginx -p 8080:80 nginx:latest
+# [!code focus]
 cur http://localhost:8080
 
 <!DOCTYPE html>
@@ -222,6 +228,7 @@ cur http://localhost:8080
 对于只应公开给直接在主机上运行的邻居服务来说，这可能会带来安全风险。幸运的是，你可以使用 **host_address:host_port:container_port** 语法将端口绑定到特定的主机接口：
 
 ```bash
+# [!meta title:bash copy]
 docker run -d --name nginx -p 127.0.0.1:8080:80 nginx:latest
 ```
 
@@ -234,6 +241,7 @@ docker run -d --name nginx -p 127.0.0.1:8080:80 nginx:latest
 不过，由于公开端口意味着容器会使用该端口，因此在大多数情况下，你会希望绑定容器公开的所有端口。在使用 **docker run** 启动容器时，可以通过设置 **-P (--publish-all)** 标志来实现这一点：
 
 ```bash
+# [!meta title:bash copy]
 docker run -d -P --name demo demo-image:latest
 ```
 
@@ -242,7 +250,7 @@ docker run -d -P --name demo demo-image:latest
 容器的 **docker ps** 输出会确认哪些端口已被映射：
 
 ```bash
-# focus(1:2)
+# [!code focus]
 docker ps
 
 CONTAINER ID   IMAGE               COMMAND                  CREATED             STATUS             PORTS                                     NAMES

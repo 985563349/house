@@ -12,7 +12,7 @@ draft: false
 我们先从一个案例开始，首先定义两个服务器组件：
 
 ```tsx
-// title banner.tsx
+// [!meta title:banner.tsx copy]
 export const Banner: React.FC = async () => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -23,7 +23,7 @@ export const Banner: React.FC = async () => {
 其中一个组件会随机抛出错误：
 
 ```tsx
-// title error-component.tsx
+// [!meta title:error-component.tsx copy]
 export const ErrorComponent: React.FC = async () => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -38,7 +38,7 @@ export const ErrorComponent: React.FC = async () => {
 在页面中使用这个两个组件。如果不出意外，应用将会有 50% 的概率崩溃：
 
 ```tsx
-// title page.tsx
+// [!meta title:page.tsx copy]
 import { Banner } from './component/banner';
 import { ErrorComponent } from './component/error-component';
 
@@ -63,7 +63,7 @@ export default function Page() {
 使用 try catch 捕获错误：
 
 ```tsx
-// title error-component.tsx
+// [!meta title:error-component.tsx copy]
 export const ErrorComponent: React.FC = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -82,7 +82,7 @@ export const ErrorComponent: React.FC = async () => {
 使用 error boundary 捕获错误：
 
 ```tsx
-// title page.tsx
+// [!meta title:page.tsx copy]
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { Banner } from './component/banner';
@@ -111,7 +111,7 @@ export default function Page() {
 NextJS 提供了一个方法能重新渲染服务器组件帮助其从错误中恢复，我们定义一个按钮组件，点击后运行这个方法：
 
 ```tsx
-// title refresh-button.tsx
+// [!meta title:refresh-button.tsx copy]
 'use client';
 
 import { startTransition } from 'react';
@@ -140,7 +140,7 @@ export const RefreshButton: React.FC<{ onClick?: () => void }> = ({ onClick }) =
 try catch 捕获中使用：
 
 ```tsx
-// title error-component.tsx
+// [!meta title:error-component.tsx copy]
 import { RefreshButton } from './refresh-button';
 
 export const ErrorComponent: React.FC = async () => {
@@ -168,13 +168,19 @@ export const ErrorComponent: React.FC = async () => {
 定义一个 error fallback 组件，接收 resetErrorBoundary 方法：
 
 ```tsx
-// title error-fallback.tsx
+// [!meta title:error-fallback.tsx copy]
 'use client';
 
 import { useEffect } from 'react';
 import { RefreshButton } from './refresh-button';
 
-export function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+export function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error);
@@ -192,7 +198,7 @@ export function ErrorFallback({ error, resetErrorBoundary }: { error: Error; res
 修改页面代码：
 
 ```tsx
-// title page.tsx
+// [!meta title:page.tsx copy]
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { Banner } from './component/banner';
