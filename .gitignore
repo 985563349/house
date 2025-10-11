@@ -40,5 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-node_modules
-.env
+# openspec
+/openspec/changes
+/openspec/specs

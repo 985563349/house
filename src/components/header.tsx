@@ -1,35 +1,30 @@
-'use client';
-
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
-import NavLink from '@/components/nav-link';
+import GithubStars from '@/components/github-stars';
+import SiteNav from '@/components/site-nav';
 import ThemeToggle from '@/components/theme-toggle';
+import { Separator } from '@/components/ui/separator';
 
 const Header: React.FC = () => {
-  const pathname = usePathname() ?? '';
-
   return (
-    <header>
-      <div className="flex items-center justify-between mx-auto p-5 max-w-screen-lg">
-        <Link href="/">
-          <span className="font-semibold">Jee</span>
-        </Link>
+    <header className="sticky top-0 z-20">
+      <div className="border-b border-dashed border-border/80 bg-background/65 backdrop-blur overflow-hidden">
+        <div className="flex items-center justify-between mx-auto px-4 sm:px-6 max-w-3xl h-12">
+          <Link href="/">
+            <span className="font-semibold">Jason</span>
+          </Link>
 
-        <div className="flex items-center gap-4">
-          <nav className="space-x-6">
-            <NavLink href="/" active={/^\/$/.test(pathname)}>
-              首页
-            </NavLink>
-            <NavLink href="/about" active={/^\/about(?:\/.*)?$/.test(pathname)}>
-              关于
-            </NavLink>
-            <NavLink href="/posts" active={/^\/posts(?:\/.*)?$/.test(pathname)}>
-              文章
-            </NavLink>
-          </nav>
-
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <SiteNav />
+            <div className="flex items-center">
+              <GithubStars />
+              <Separator
+                className="mx-2 data-vertical:h-4 data-vertical:self-center"
+                orientation="vertical"
+              />
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
       </div>
     </header>

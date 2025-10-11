@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(request: NextRequest) {
@@ -10,7 +10,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (!path) {
-    return NextResponse.json({ message: 'Missing path param' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Missing path param' },
+      { status: 400 },
+    );
   }
 
   revalidatePath(path);

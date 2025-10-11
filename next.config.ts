@@ -1,7 +1,25 @@
+import createMDX from '@next/mdx';
 import type { NextConfig } from 'next';
+
+const chConfig = {
+  components: { code: 'Code' },
+};
+
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [
+      'remark-frontmatter',
+      ['remark-mdx-frontmatter', { name: 'metadata' }],
+      'remark-gfm',
+      ['remark-codehike', chConfig],
+    ],
+    recmaPlugins: [['recma-codehike', chConfig]],
+  },
+});
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   async headers() {
     return [
       {
@@ -15,14 +33,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin/index.html',
-      },
-    ];
-  },
 };
 
-export default nextConfig;
+export default withMDX(nextConfig);

@@ -1,39 +1,62 @@
 'use client';
 
-import { useState } from 'react';
-import { FiCopy, FiCheck } from 'react-icons/fi';
+import { AnimatePresence, motion } from 'motion/react';
+import { useTiks } from '@rexa-developer/tiks/react';
+import { useWebHaptics } from 'web-haptics/react';
+import { CopyIcon, CheckIcon, XIcon } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
+
+import { Button } from '@/components/ui/button';
 
 export type CopyButtonProps = {
   className?: string;
-  style?: React.CSSProperties;
-  text?: string | (() => string);
+  text?: string;
 };
 
 const CopyButton: React.FC<CopyButtonProps> = (props) => {
-  const { className, style, text } = props;
+  const { className, text = '' } = props;
 
-  const [copied, setCopied] = useState(false);
+  const tiks = useTiks();
+  const haptics = useWebHaptics();
+  const { status, copy } = useCopyToClipboard();
+
+  const handleClick = async () => {
+    try {
+      await copy(text);
+      tiks.success();
+      haptics.trigger('success');
+    } catch {
+      tiks.error();
+      haptics.trigger('error');
+    }
+  };
 
   return (
-    <button
-      className={cn(
-        'rounded-sm p-1 text-base hover:bg-black/5 dark:hover:bg-white/5 transition-[background-color] duration-300 ease-in-out cursor-pointer',
-        className
-      )}
-      style={style}
-      type="button"
-      onClick={() => {
-        if (!copied) {
-          setCopied(true);
-          navigator.clipboard.writeText(typeof text === 'function' ? text() : text ?? '');
-          setTimeout(() => setCopied(false), 2000);
-        }
-      }}
+    <Button
+      variant="ghost"
+      size="icon"
+      className={className}
+      onClick={handleClick}
     >
-      {copied ? <FiCheck className="text-green-500" /> : <FiCopy />}
-    </button>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={status}
+          initial={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+          transition={{
+            type: 'spring',
+            duration: 0.3,
+            bounce: 0,
+          }}
+        >
+          {status === 'idle' && <CopyIcon />}
+          {status === 'done' && <CheckIcon />}
+          {status === 'error' && <XIcon />}
+        </motion.div>
+      </AnimatePresence>
+    </Button>
   );
 };
 

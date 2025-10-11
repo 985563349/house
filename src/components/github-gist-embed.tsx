@@ -10,7 +10,9 @@ const GitHubGistEmbed: React.FC<GitHubGistEmbedProps> = (props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const doc = iframeRef.current?.contentDocument ?? iframeRef.current?.contentWindow?.document;
+    const doc =
+      iframeRef.current?.contentDocument ??
+      iframeRef.current?.contentWindow?.document;
     const id = iframeRef.current?.dataset.id;
 
     const gistLink = `https://gist.github.com/${id}.js`;

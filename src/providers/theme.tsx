@@ -2,9 +2,11 @@
 
 import { ThemeProvider as NextThemeProvider } from 'next-themes';
 
-const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   return (
-    <NextThemeProvider attribute="class" defaultTheme="light">
+    <NextThemeProvider attribute={['class', 'data-theme']} defaultTheme="light">
       {children}
     </NextThemeProvider>
   );

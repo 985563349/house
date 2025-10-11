@@ -1,64 +1,111 @@
+import { basename } from 'node:path';
+
+import { type Metadata } from 'next';
+import Link from 'next/link';
+import { glob } from 'tinyglobby';
 import { format } from 'date-fns';
+import { ArrowLeftIcon, TagIcon } from 'lucide-react';
 
-import client from '@/tina/__generated__/client';
-import { readingTime } from '@/lib/utils';
-import Markdown from '@/components/markdown';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 import BackLink from '@/components/back-link';
+import FadeIn from '@/components/fade-in';
 
-export const revalidate = 3600; // invalidate every hour
+export const dynamicParams = false;
 
-export const dynamicParams = true;
+export async function generateStaticParams() {
+  const files = await glob('content/*.mdx');
+  const slugs = files.map((file) => basename(file, '.mdx'));
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  return slugs.map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
+  const { metadata } = await import(`@/content/${slug}.mdx`);
 
   return {
-    title: data.post.title,
+    title: metadata.title,
+    description: metadata.description,
   };
 }
 
-export async function generateStaticParams() {
-  const { data } = await client.queries.postConnection({
-    first: 10,
-    sort: 'date',
-    filter: { draft: { eq: false } },
-  });
-
-  if (!data.postConnection.edges) {
-    return [];
-  }
-
-  return data.postConnection.edges.map((post) => ({
-    slug: post?.node?._sys.breadcrumbs.join('/'),
-  }));
-}
-
-export default async function Post({ params }: { params: Promise<{ slug: string }> }) {
+export default async function Post({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const { data } = await client.queries.post({ relativePath: `${slug}.mdx` });
+  const { default: PostContent, metadata } = await import(
+    `@/content/${slug}.mdx`
+  );
 
   return (
-    <div className="mx-auto max-w-screen-lg px-8 py-10">
-      <div className="mb-10">
-        <h1 className="mb-4 text-3xl font-semibold">{data.post.title}</h1>
+    <div className="space-y-12">
+      <div className="space-y-6">
+        <FadeIn order={1}>
+          <div className="flex items-center justify-between py-2">
+            <Link
+              href="/posts"
+              className={cn(
+                buttonVariants({ variant: 'link' }),
+                'px-0 text-muted-foreground hover:text-foreground hover:no-underline',
+              )}
+            >
+              <ArrowLeftIcon />
+              文章
+            </Link>
+          </div>
+        </FadeIn>
 
-        <div className="flex items-center gap-2 text-sm">
-          <time dateTime={data.post.date}>
-            {format(new Date(data.post.date), 'yyyy 年 MM 月 dd')}
-          </time>
-          &bull;
-          <span>阅读时间 {readingTime(JSON.stringify(data.post.body))} 分钟</span>
-        </div>
+        <FadeIn order={2}>
+          <div className="flex flex-col gap-4">
+            <p className="flex justify-between">
+              <span className="text-sm text-muted-foreground">
+                {format(metadata.date, 'yyyy.MM.dd')}
+              </span>
+            </p>
+
+            <h3 className="text-3xl font-semibold tracking-tight text-balance">
+              {metadata.title}
+            </h3>
+
+            <p className="text-sm text-muted-foreground">
+              {metadata.description}
+            </p>
+
+            <div className="flex items-center flex-wrap gap-1.5">
+              <TagIcon className="size-3.5 text-muted-foreground" />
+              {metadata.categories.map((category: string) => (
+                <span
+                  key={category}
+                  className="inline-flex items-center border border-dashed rounded-md px-1.5 py-0.5 font-geist-mono text-xs text-muted-foreground"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+
+        <FadeIn order={3}>
+          <hr className="border-dashed border-border/60" />
+        </FadeIn>
+
+        <FadeIn order={4}>
+          <div className="prose dark:prose-invert">
+            <PostContent />
+          </div>
+        </FadeIn>
       </div>
 
-      <section className="prose dark:prose-invert">
-        <Markdown content={data.post.body} />
-      </section>
-
-      <p className="my-10 text-gray-500 dark:text-gray-400"># {data.post.topic?.name}</p>
-
-      <BackLink />
+      <FadeIn order={5}>
+        <BackLink />
+      </FadeIn>
     </div>
   );
 }

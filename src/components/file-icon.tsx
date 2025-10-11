@@ -17,16 +17,25 @@ const getIcon = themeIcons({
 export type FileIconProps = {
   className?: string;
   style?: React.CSSProperties;
-  filename: string;
+  name: string;
 };
 
 const FileIcon: React.FC<FileIconProps> = (props) => {
-  const { className, style, filename } = props;
+  const { className, style, name } = props;
 
-  const { svg, color } = getIcon(filename);
-  const __html = svg.replace(/svg/, `svg fill='${color}' width='1em' height='1em'`);
+  const { svg, color } = getIcon(name);
+  const __html = svg.replace(
+    /svg/,
+    `svg fill='${color}' width='1em' height='1em'`,
+  );
 
-  return <span className={className} style={style} dangerouslySetInnerHTML={{ __html }} />;
+  return (
+    <span
+      className={className}
+      style={style}
+      dangerouslySetInnerHTML={{ __html }}
+    />
+  );
 };
 
 export default FileIcon;

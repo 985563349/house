@@ -1,0 +1,21 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Bun, TypeScript, React, Next.js, Tailwind CSS, shadcn/ui, MDX. 
+  Blog posts are local MDX files in `content/*.mdx`.
+  Match the existing lightweight component style.
+  Prefer small, reviewable changes.
+  Avoid unrelated file churn.
+
+rules:
+  proposal:
+    - Keep scope small and explicit.
+    - Include non-goals when a change could accidentally expand in scope.
+  design:
+    - Include routing, rendering, or content-shape impacts when affected.
+    - Include compatibility and migration notes for framework/config changes.
+  specs:
+    - Write concrete SHALL requirements with user-visible scenarios.
+  tasks:
+    - Break work into small verifiable steps.
+    - Include validation steps for affected pages, content, or UI behavior.
