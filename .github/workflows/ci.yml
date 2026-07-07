@@ -24,9 +24,10 @@ jobs:
       - name: Create Env File
         run: |
           cat << EOF >> .env
-          NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+          NEXT_PRIVATE_DEBUG_CACHE=${{ secrets.NEXT_PRIVATE_DEBUG_CACHE }}
           NEXT_SECRET_TOKEN=${{ secrets.NEXT_SECRET_TOKEN }}
-          TINA_TOKEN=${{ secrets.TINA_TOKEN }}
+          NEXT_GITHUB_API_TOKEN=${{ secrets.NEXT_GITHUB_API_TOKEN }}
+          NEXT_GITHUB_REPO=${{ secrets.NEXT_GITHUB_REPO }}
           EOF
 
       - name: Build Docker Image

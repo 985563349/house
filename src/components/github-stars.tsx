@@ -11,11 +11,11 @@ import { cn } from '@/lib/utils';
 
 async function getGitHubStars() {
   const response = await fetch(
-    `https://api.github.com/repos/${process.env.GITHUB_REPO}`,
+    `https://api.github.com/repos/${process.env.NEXT_GITHUB_REPO}`,
     {
       headers: {
         Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${process.env.GITHUB_API_TOKEN}`,
+        Authorization: `Bearer ${process.env.NEXT_GITHUB_API_TOKEN}`,
         'X-GitHub-Api-Version': '2022-11-28',
       },
       next: { revalidate: 24 * 60 * 60 },
@@ -37,7 +37,7 @@ export default async function GitHubStars() {
       <TooltipTrigger
         render={
           <Link
-            href={`https://github.com/${process.env.GITHUB_REPO}`}
+            href={`https://github.com/${process.env.NEXT_GITHUB_REPO}`}
             target="_blank"
             className={cn(
               'text-muted-foreground',
