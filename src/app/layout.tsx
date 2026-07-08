@@ -4,11 +4,14 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { cn } from '@/lib/utils';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from '@/components/ui/sonner';
 import GradualBlur from '@/components/gradual-blur';
+import ScrollToTop from '@/components/scroll-to-top';
 import Footer from '@/components/footer';
 import Header from '@/components/header';
 
 import ThemeProvider from '@/providers/theme';
+import QueryProvider from '@/providers/query';
 
 import '../globals.css';
 
@@ -40,18 +43,22 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(geist.className, geist.variable, geistMono.variable)}>
         <ThemeProvider>
-          <TooltipProvider>
-            <div className="grid grid-cols-1 grid-rows-[auto_1fr_auto] min-h-dvh">
-              <Header />
-              <main>
-                <div className="mx-auto px-4 py-6 sm:px-6 max-w-3xl h-full">
-                  {children}
-                </div>
-              </main>
+          <QueryProvider>
+            <TooltipProvider>
+              <div className="grid grid-cols-1 grid-rows-[auto_1fr_auto] min-h-dvh">
+                <Header />
+                <main>
+                  <div className="mx-auto px-4 py-6 sm:px-6 max-w-3xl h-full">
+                    {children}
+                  </div>
+                </main>
+                <Footer />
+              </div>
+              <Toaster position="top-center" />
               <GradualBlur />
-              <Footer />
-            </div>
-          </TooltipProvider>
+              <ScrollToTop />
+            </TooltipProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

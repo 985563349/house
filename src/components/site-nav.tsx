@@ -12,6 +12,10 @@ const SiteNav: React.FC = () => {
       <Navigate href="/posts" active={/^\/posts(?:\/.*)?$/.test(pathname)}>
         文章
       </Navigate>
+
+      <Navigate href="/icarus" active={/^\/icarus(?:\/.*)?$/.test(pathname)}>
+        icarus
+      </Navigate>
     </nav>
   );
 };

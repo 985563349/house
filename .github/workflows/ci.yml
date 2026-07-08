@@ -26,8 +26,17 @@ jobs:
           cat << EOF >> .env
           NEXT_PRIVATE_DEBUG_CACHE=${{ secrets.NEXT_PRIVATE_DEBUG_CACHE }}
           NEXT_SECRET_TOKEN=${{ secrets.NEXT_SECRET_TOKEN }}
+
           NEXT_GITHUB_API_TOKEN=${{ secrets.NEXT_GITHUB_API_TOKEN }}
           NEXT_GITHUB_REPO=${{ secrets.NEXT_GITHUB_REPO }}
+
+          NEXT_DOMAIN_URL=${{ secrets.NEXT_DOMAIN_URL }}
+          NEXT_API_RATE_LIMIT=${{ secrets.NEXT_API_RATE_LIMIT }}
+          NEXT_API_RATE_LIMIT_DURATION=${{ secrets.NEXT_API_RATE_LIMIT_DURATION }}
+
+          NEXT_OPENAI_API_KEY=${{ secrets.NEXT_OPENAI_API_KEY }}
+          NEXT_OPENAI_BASE_URL=${{ secrets.NEXT_OPENAI_BASE_URL }}
+          NEXT_OPENAI_MODEL_ID=${{ secrets.NEXT_OPENAI_MODEL_ID }}
           EOF
 
       - name: Build Docker Image
