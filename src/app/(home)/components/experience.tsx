@@ -5,8 +5,8 @@ const experiences = [
     company: 'BDY Tech',
     position: '高级前端工程师',
     employmentType: '全职',
-    period: '2025.10 - 2026.05',
-    duration: '8个月',
+    period: '2025.10 - 2026.06',
+    duration: '9个月',
     descriptions: [
       '负责核心功能的开发与维护，持续完善产品能力与用户体验。',
       '为 Web 与移动端沉淀可复用组件，统一多端界面规范与交互体验。',

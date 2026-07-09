@@ -1,4 +1,10 @@
-import { CodeXmlIcon, Gamepad2Icon, MapPinIcon, MailIcon } from 'lucide-react';
+import {
+  CodeXmlIcon,
+  CakeIcon,
+  Gamepad2Icon,
+  MapPinIcon,
+  MailIcon,
+} from 'lucide-react';
 import { PiWechatLogoBold } from 'react-icons/pi';
 
 import { cn } from '@/lib/utils';
@@ -15,6 +21,10 @@ const overviewItems = [
     icon: Gamepad2Icon,
     label: '魂系游戏爱好者',
     className: 'sm:col-span-2',
+  },
+  {
+    icon: CakeIcon,
+    label: '1998.09',
   },
   {
     icon: MapPinIcon,
