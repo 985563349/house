@@ -63,6 +63,7 @@ ENV HOSTNAME="0.0.0.0"
 
 # Copy production assets
 COPY --from=builder --chown=bun:bun /app/public ./public
+COPY --from=builder --chown=bun:bun /app/content ./content
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
@@ -75,7 +76,7 @@ COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
 # If you want to persist the fetch cache generated during the build so that
 # cached responses are available immediately on startup, uncomment this line:
-# COPY --from=builder --chown=bun:bun /app/.next/cache ./.next/cache
+COPY --from=builder --chown=bun:bun /app/.next/cache ./.next/cache
 
 # Switch to non-root user for security best practices
 USER bun
