@@ -1,22 +1,28 @@
 import Link from 'next/link';
-import { ArrowUpRightIcon } from 'lucide-react';
+import { ArrowUpRightIcon, Clock4Icon } from 'lucide-react';
 
 export type PostCardProps = {
   title: string;
   href: string;
   description: string;
   date: string;
+  minutes: number;
   categories: string[];
 };
 
 const PostCard: React.FC<PostCardProps> = (props) => {
-  const { title, href, description, date, categories } = props;
+  const { title, href, description, date, minutes, categories } = props;
 
   return (
     <div className="flex flex-col gap-3 border border-dashed border-border/80 rounded-xl p-4">
-      <p>
-        <span className="text-sm text-muted-foreground">{date}</span>
-      </p>
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{date}</span>
+
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Clock4Icon className="size-3.5" />
+          <span>{minutes} 分钟</span>
+        </div>
+      </div>
 
       <Link href={href} className="group flex items-center justify-between">
         <span className="text-lg font-medium text-balance leading-snug group-hover:underline">

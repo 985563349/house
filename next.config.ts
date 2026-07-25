@@ -11,6 +11,7 @@ const withMDX = createMDX({
       'remark-frontmatter',
       ['remark-mdx-frontmatter', { name: 'metadata' }],
       'remark-gfm',
+      ['@markloom/remark-raw', { name: 'raw' }],
       ['remark-codehike', chConfig],
     ],
     recmaPlugins: [['recma-codehike', chConfig]],

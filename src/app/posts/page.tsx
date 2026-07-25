@@ -3,6 +3,7 @@ import { basename } from 'node:path';
 import type { Metadata } from 'next';
 import { glob } from 'tinyglobby';
 import { compareDesc, format } from 'date-fns';
+import { readingTime } from 'reading-time-estimator';
 
 import PostCard from '@/components/post-card';
 import FadeIn from '@/components/fade-in';
@@ -17,8 +18,8 @@ export default async function Posts() {
 
   const posts = await Promise.all(
     slugs.map(async (slug) => {
-      const { metadata } = await import(`@/content/${slug}.mdx`);
-      return { slug, metadata };
+      const { metadata, raw } = await import(`@/content/${slug}.mdx`);
+      return { slug, metadata, raw };
     }),
   );
 
@@ -42,17 +43,22 @@ export default async function Posts() {
 
       <div className="py-4">
         <div className="flex flex-col gap-4">
-          {sortedPosts.map((post, index) => (
-            <FadeIn key={post.slug} order={index + 2}>
-              <PostCard
-                title={post.metadata.title}
-                href={`/posts/${post.slug}`}
-                description={post.metadata.description}
-                date={format(post.metadata.date, 'yyyy.MM.dd')}
-                categories={post.metadata.categories}
-              />
-            </FadeIn>
-          ))}
+          {sortedPosts.map((post, index) => {
+            const { minutes } = readingTime(post.raw);
+
+            return (
+              <FadeIn key={post.slug} order={index + 2}>
+                <PostCard
+                  title={post.metadata.title}
+                  href={`/posts/${post.slug}`}
+                  description={post.metadata.description}
+                  date={format(post.metadata.date, 'yyyy.MM.dd')}
+                  minutes={minutes}
+                  categories={post.metadata.categories}
+                />
+              </FadeIn>
+            );
+          })}
         </div>
       </div>
     </div>

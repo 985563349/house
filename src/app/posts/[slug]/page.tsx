@@ -4,7 +4,8 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { glob } from 'tinyglobby';
 import { format } from 'date-fns';
-import { ArrowLeftIcon, TagIcon } from 'lucide-react';
+import { readingTime } from 'reading-time-estimator';
+import { ArrowLeftIcon, Clock4Icon, TagIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
@@ -40,9 +41,13 @@ export default async function Post({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { default: PostContent, metadata } = await import(
-    `@/content/${slug}.mdx`
-  );
+  const {
+    default: PostContent,
+    metadata,
+    raw,
+  } = await import(`@/content/${slug}.mdx`);
+
+  const { minutes } = readingTime(raw);
 
   return (
     <div className="space-y-12">
@@ -64,11 +69,14 @@ export default async function Post({
 
         <FadeIn order={2}>
           <div className="flex flex-col gap-4">
-            <p className="flex justify-between">
-              <span className="text-sm text-muted-foreground">
-                {format(metadata.date, 'yyyy.MM.dd')}
-              </span>
-            </p>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span className="">{format(metadata.date, 'yyyy.MM.dd')}</span>
+
+              <div className="flex items-center gap-1">
+                <Clock4Icon className="size-3.5" />
+                <span>{minutes} 分钟</span>
+              </div>
+            </div>
 
             <h3 className="text-3xl font-semibold tracking-tight text-balance">
               {metadata.title}
