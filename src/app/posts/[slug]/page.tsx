@@ -3,12 +3,22 @@ import { basename } from 'node:path';
 import { type Metadata } from 'next';
 import Link from 'next/link';
 import { glob } from 'tinyglobby';
-import { format } from 'date-fns';
+import { compareDesc, format } from 'date-fns';
 import { readingTime } from 'reading-time-estimator';
-import { ArrowLeftIcon, Clock4Icon, TagIcon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  Clock4Icon,
+  TagIcon,
+} from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import BackLink from '@/components/back-link';
 import FadeIn from '@/components/fade-in';
 
@@ -17,8 +27,16 @@ export const dynamicParams = false;
 export async function generateStaticParams() {
   const files = await glob('content/*.mdx');
   const slugs = files.map((file) => basename(file, '.mdx'));
+  const posts = await Promise.all(
+    slugs.map(async (slug) => {
+      const { metadata } = await import(`@/content/${slug}.mdx`);
+      return { slug, metadata };
+    }),
+  );
 
-  return slugs.map((slug) => ({ slug }));
+  return posts
+    .filter((post) => !post.metadata.draft)
+    .map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({
@@ -41,12 +59,31 @@ export default async function Post({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const {
-    default: PostContent,
-    metadata,
-    raw,
-  } = await import(`@/content/${slug}.mdx`);
 
+  const files = await glob('content/*.mdx');
+  const slugs = files.map((file) => basename(file, '.mdx'));
+
+  const posts = await Promise.all(
+    slugs.map(async (slug) => {
+      const { default: PostContent, ...other } = await import(
+        `@/content/${slug}.mdx`
+      );
+
+      return { PostContent, slug, ...other };
+    }),
+  );
+
+  const sortedPosts = posts
+    .filter((post) => !post.metadata.draft)
+    .sort((a, b) => compareDesc(a.metadata.date, b.metadata.date));
+
+  const index = sortedPosts.findIndex((post) => post.slug === slug);
+
+  const previous = sortedPosts[index - 1];
+  const current = sortedPosts[index];
+  const next = sortedPosts[index + 1];
+
+  const { PostContent, metadata, raw } = current;
   const { minutes } = readingTime(raw);
 
   return (
@@ -64,6 +101,46 @@ export default async function Post({
               <ArrowLeftIcon />
               文章
             </Link>
+
+            <div className="flex items-center gap-2">
+              {previous && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        href={`/posts/${previous.slug}`}
+                        className={buttonVariants({
+                          variant: 'secondary',
+                          size: 'icon-sm',
+                        })}
+                      >
+                        <ArrowLeftIcon />
+                      </Link>
+                    }
+                  />
+                  <TooltipContent>{previous?.metadata.title}</TooltipContent>
+                </Tooltip>
+              )}
+
+              {next && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        href={`/posts/${next.slug}`}
+                        className={buttonVariants({
+                          variant: 'secondary',
+                          size: 'icon-sm',
+                        })}
+                      >
+                        <ArrowRightIcon />
+                      </Link>
+                    }
+                  />
+                  <TooltipContent>{next?.metadata.title}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           </div>
         </FadeIn>
 

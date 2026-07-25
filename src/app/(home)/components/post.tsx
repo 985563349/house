@@ -2,8 +2,9 @@ import { basename } from 'node:path';
 
 import Link from 'next/link';
 import { compareDesc, format } from 'date-fns';
-import { ArrowRightIcon } from 'lucide-react';
+import { readingTime } from 'reading-time-estimator';
 import { glob } from 'tinyglobby';
+import { ArrowRightIcon } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import PostCard from '@/components/post-card';
@@ -14,8 +15,8 @@ const Post: React.FC = async () => {
 
   const posts = await Promise.all(
     slugs.map(async (slug) => {
-      const { metadata } = await import(`@/content/${slug}.mdx`);
-      return { slug, metadata };
+      const { metadata, raw } = await import(`@/content/${slug}.mdx`);
+      return { slug, metadata, raw };
     }),
   );
 
@@ -29,16 +30,21 @@ const Post: React.FC = async () => {
       <p className="text-3xl font-semibold tracking-tight">文章</p>
 
       <div className="flex flex-col gap-4">
-        {recentPosts.map((post) => (
-          <PostCard
-            key={post.slug}
-            title={post.metadata.title}
-            href={`/posts/${post.slug}`}
-            description={post.metadata.description}
-            date={format(post.metadata.date, 'yyyy.MM.dd')}
-            categories={post.metadata.categories}
-          />
-        ))}
+        {recentPosts.map((post) => {
+          const { minutes } = readingTime(post.raw);
+
+          return (
+            <PostCard
+              key={post.slug}
+              title={post.metadata.title}
+              href={`/posts/${post.slug}`}
+              description={post.metadata.description}
+              date={format(post.metadata.date, 'yyyy.MM.dd')}
+              minutes={minutes}
+              categories={post.metadata.categories}
+            />
+          );
+        })}
       </div>
 
       <div className="flex justify-center items-center py-2">
