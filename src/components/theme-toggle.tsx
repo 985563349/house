@@ -6,11 +6,13 @@ import { useWebHaptics } from 'web-haptics/react';
 import { MoonIcon, SunIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import ShortcutTrigger from '@/components/shortcut-trigger';
 
 const ThemeToggle: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -28,13 +30,18 @@ const ThemeToggle: React.FC = () => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <Button variant="ghost" size="icon" onClick={handleClick}>
-            <SunIcon className="dark:hidden size-4" />
-            <MoonIcon className="hidden dark:inline-block size-4" />
-          </Button>
+          <ShortcutTrigger shortcut="d">
+            <Button variant="ghost" size="icon" onClick={handleClick}>
+              <SunIcon className="dark:hidden size-4" />
+              <MoonIcon className="hidden dark:inline-block size-4" />
+            </Button>
+          </ShortcutTrigger>
         }
       />
-      <TooltipContent>切换主题</TooltipContent>
+      <TooltipContent>
+        切换主题
+        <Kbd>D</Kbd>
+      </TooltipContent>
     </Tooltip>
   );
 };

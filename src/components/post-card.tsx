@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowUpRightIcon, Clock4Icon } from 'lucide-react';
+import { AlarmClockIcon, ArrowUpRightIcon } from 'lucide-react';
 
 export type PostCardProps = {
   title: string;
@@ -18,8 +18,8 @@ const PostCard: React.FC<PostCardProps> = (props) => {
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{date}</span>
 
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Clock4Icon className="size-3.5" />
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <AlarmClockIcon className="size-3.5" />
           <span>{minutes} 分钟</span>
         </div>
       </div>

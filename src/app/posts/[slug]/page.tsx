@@ -6,14 +6,15 @@ import { glob } from 'tinyglobby';
 import { compareDesc, format } from 'date-fns';
 import { readingTime } from 'reading-time-estimator';
 import {
+  AlarmClockIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
-  Clock4Icon,
   TagIcon,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
 import {
   Tooltip,
   TooltipTrigger,
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/tooltip';
 import BackLink from '@/components/back-link';
 import FadeIn from '@/components/fade-in';
+import ShortcutTrigger from '@/components/shortcut-trigger';
 
 export const dynamicParams = false;
 
@@ -107,18 +109,25 @@ export default async function Post({
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Link
-                        href={`/posts/${previous.slug}`}
-                        className={buttonVariants({
-                          variant: 'secondary',
-                          size: 'icon-sm',
-                        })}
-                      >
-                        <ArrowLeftIcon />
-                      </Link>
+                      <ShortcutTrigger shortcut="left">
+                        <Link
+                          href={`/posts/${previous.slug}`}
+                          className={buttonVariants({
+                            variant: 'secondary',
+                            size: 'icon-sm',
+                          })}
+                        >
+                          <ArrowLeftIcon />
+                        </Link>
+                      </ShortcutTrigger>
                     }
                   />
-                  <TooltipContent>{previous?.metadata.title}</TooltipContent>
+                  <TooltipContent>
+                    {previous?.metadata.title}
+                    <Kbd>
+                      <ArrowLeftIcon />
+                    </Kbd>
+                  </TooltipContent>
                 </Tooltip>
               )}
 
@@ -126,18 +135,25 @@ export default async function Post({
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Link
-                        href={`/posts/${next.slug}`}
-                        className={buttonVariants({
-                          variant: 'secondary',
-                          size: 'icon-sm',
-                        })}
-                      >
-                        <ArrowRightIcon />
-                      </Link>
+                      <ShortcutTrigger shortcut="right">
+                        <Link
+                          href={`/posts/${next.slug}`}
+                          className={buttonVariants({
+                            variant: 'secondary',
+                            size: 'icon-sm',
+                          })}
+                        >
+                          <ArrowRightIcon />
+                        </Link>
+                      </ShortcutTrigger>
                     }
                   />
-                  <TooltipContent>{next?.metadata.title}</TooltipContent>
+                  <TooltipContent>
+                    {next?.metadata.title}
+                    <Kbd>
+                      <ArrowRightIcon />
+                    </Kbd>
+                  </TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -149,8 +165,8 @@ export default async function Post({
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span className="">{format(metadata.date, 'yyyy.MM.dd')}</span>
 
-              <div className="flex items-center gap-1">
-                <Clock4Icon className="size-3.5" />
+              <div className="flex items-center gap-1.5">
+                <AlarmClockIcon className="size-3.5" />
                 <span>{minutes} 分钟</span>
               </div>
             </div>
