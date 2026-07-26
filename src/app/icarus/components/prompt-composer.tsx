@@ -19,6 +19,8 @@ export type PromptComposerProps = {
   onStop?: () => void;
 };
 
+const MAX_INPUT_LENGTH = 500;
+
 const PromptComposer: React.FC<PromptComposerProps> = (props) => {
   const { status, tools, onSubmit, onStop } = props;
 
@@ -39,16 +41,22 @@ const PromptComposer: React.FC<PromptComposerProps> = (props) => {
     <PromptInput onSubmit={handleSubmit}>
       <PromptInputTextarea
         value={input}
+        maxLength={MAX_INPUT_LENGTH}
         placeholder="说点什么..."
         onChange={(e) => setInput(e.currentTarget.value)}
       />
       <PromptInputFooter>
         <PromptInputTools>{tools}</PromptInputTools>
-        <PromptInputSubmit
-          status={status}
-          onStop={onStop}
-          disabled={isSubmitted || (!input && !isStreaming)}
-        />
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {input.length}/{MAX_INPUT_LENGTH}
+          </span>
+          <PromptInputSubmit
+            status={status}
+            onStop={onStop}
+            disabled={isSubmitted || (!input && !isStreaming)}
+          />
+        </div>
       </PromptInputFooter>
     </PromptInput>
   );

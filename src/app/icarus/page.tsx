@@ -86,7 +86,7 @@ export default function Icarus() {
           <div className="absolute inset-0 flex flex-col">
             <FadeIn order={2} className="flex-1 min-h-0">
               <Conversation className="h-full py-4 overflow-hidden">
-                <ConversationContent className="min-h-full p-0">
+                <ConversationContent className="min-h-full">
                   {isEmpty ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4">
                       <Intro />

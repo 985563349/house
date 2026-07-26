@@ -15,6 +15,7 @@ const withMDX = createMDX({
       ['remark-codehike', chConfig],
     ],
     recmaPlugins: [['recma-codehike', chConfig]],
+    rehypePlugins: ['rehype-slug'],
   },
 });
 

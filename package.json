@@ -45,6 +45,7 @@
     "react-icons": "^5.7.0",
     "reading-time-estimator": "^2.9.0",
     "recma-codehike": "^0.0.1",
+    "rehype-slug": "^6.0.0",
     "remark-codehike": "^0.0.1",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
