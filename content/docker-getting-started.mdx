@@ -6,17 +6,15 @@ categories:
   - Docker
 ---
 
-原文地址：[Docker Tutorial for Beginners – Introduction & Getting Started](https://spacelift.io/blog/docker-tutorial#docker-basics)
-
-作者：[James Walker](https://spacelift.io/blog/author/jamesw)
-
 ![docker](/docker_logo.png 'docker')
 
-[Docker](https://www.docker.com) 是一个用于构建和运行容器的平台。容器是将源代码及其依赖关系打包到隔离环境中的软件单元。它们通常是短暂的，当容器停止时，容器文件系统中的内容就会被处理掉，但你也可以使用 [volume（卷）](https://spacelift.io/blog/docker-volumes) 等功能持久地存储数据。
+[Docker](https://www.docker.com) 是一个用于构建和运行容器的平台。它将源代码及其依赖打包到隔离环境中，让应用可以作为一个独立的软件单元运行。
 
-无论是在使用 Docker 的工作站上，还是在[使用 Kubernetes 等协调器](https://spacelift.io/blog/kubernetes-tutorial)的云中，只要有 [OCI 容器运行时](https://opencontainers.org)可用，都可以启动容器。这缩小了开发与生产之间的差距。
+容器通常是短暂的。容器停止后，其文件系统中的内容也会被处理掉；如果需要保留数据，可以使用卷将数据持久化。
 
-在本教程中，我们将介绍如何安装和开始使用 Docker。你将学习到基本概念，并看到最常见的容器管理任务的实际示例。
+只要环境中存在 [OCI 容器运行时](https://opencontainers.org)，同一个容器既可以运行在开发工作站上，也可以部署到由 Kubernetes 等编排工具管理的云环境中。这让开发环境与生产环境更容易保持一致。
+
+本文将从安装 Docker 开始，介绍镜像与容器的基本概念，并通过示例演示常见的容器管理操作。
 
 1. [Docker 入门](#docker-getting-started)
 2. [Docker 基础知识](#docker-basics)
@@ -25,17 +23,21 @@ categories:
 
 ## Docker 入门
 
-如今，Docker 主要有两种版本：Docker Engine 和 Docker Desktop。Engine 是用于 Linux 系统的守护进程和 CLI，而 Desktop 则使用虚拟化技术在 Windows、Mac 和 Linux 上提供一致的 Docker 体验。 除了 Engine 的 CLI 之外，它还包括一个用于管理容器的图形界面。虽然本文的重点是传统的 CLI 体验，但你在下面章节中看到的所有操作都可以通过 Desktop 的图形用户界面来实现。
+Docker 主要提供 Docker Engine 和 Docker Desktop 两种使用方式。Docker Engine 包含运行在 Linux 上的守护进程和 CLI；Docker Desktop 则通过虚拟化技术，在 Windows、Mac 和 Linux 上提供一致的 Docker 环境。
 
-如果你使用的是 Windows 或 Mac，Desktop 是安装 Docker 的最简单方法。前往文档的[安装页面](https://docs.docker.com/engine/install/#desktop)，为你的系统下载正确的软件包。运行安装程序，然后从应用程序菜单启动 Docker Desktop。现在，你已经准备好在终端运行 Docker 命令了。
+Docker Desktop 除了包含 Engine 的 CLI，还提供了用于管理容器的图形界面。本文会使用传统的 CLI，但你也可以在 Docker Desktop 中完成相同的操作。
 
-要在 Linux 上安装 Docker Engine，你可以下载预编译的[静态二进制文件](https://docs.docker.com/engine/install/binaries)，或者按照[文档](https://docs.docker.com/engine/install/#server)中的步骤从发行版的软件包管理器中进行安装。
+如果你使用 Windows 或 Mac，安装 Docker Desktop 是最简单的方式。前往官方文档的[安装页面](https://docs.docker.com/engine/install/#desktop)，下载对应系统的软件包并运行安装程序。
+
+启动 Docker Desktop 后，你就可以在终端中执行 Docker 命令。
+
+在 Linux 上，你可以下载预编译的[静态二进制文件](https://docs.docker.com/engine/install/binaries)，也可以按照[官方文档](https://docs.docker.com/engine/install/#server)，通过发行版的软件包管理器安装 Docker Engine。
 
 ### 在 Ubuntu 上安装 Docker Engine
 
-首次在新主机上安装 Docker Engine 之前，你需要设置 Docker 存储库。之后，你可以从存储库安装和更新 Docker。
+首次安装 Docker Engine 时，需要先配置 Docker 的软件仓库。完成配置后，你就可以通过该仓库安装和更新 Docker。
 
-设置 Docker 的 apt 存储库：
+首先，设置 Docker 的 apt 仓库：
 
 ```bash bash
 # Add Docker's official GPG key:
@@ -53,27 +55,25 @@ echo \
 sudo apt-get update
 ```
 
-> Note：如果你使用的是 Ubuntu 的衍生发行版，如 Linux Mint，你可能需要使用 UBUNTU_CODENAME 而不是 VERSION_CODENAME。
+> 注意：如果你使用 Linux Mint 等 Ubuntu 衍生发行版，可能需要将 VERSION_CODENAME 替换为 UBUNTU_CODENAME。
 
-安装 Docker 软件包：
+接下来，安装 Docker 所需的软件包：
 
 ```bash bash
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-它们的作用如下：
+这些软件包分别负责不同的功能：
 
-- docker-ce：管理容器的 Docker 守护进程。
-- docker-ce-cli：用于与守护进程交互的 CLI。
-- containerd.io：[Containerd](https://containerd.io) 是一个容器运行时，它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，以便根据 Docker 守护进程的请求启动和运行容器。
-- docker-buildx-plugin：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展构建功能的 CLI 插件。
-- docker-compose-plugin：用于定义和运行多容器应用程序的插件。
+- **docker-ce**：用于管理容器的 Docker 守护进程。
+- **docker-ce-cli**：与 Docker 守护进程交互的命令行工具。
+- **containerd.io**：[Containerd](https://containerd.io) 容器运行时。它封装了 [cgroups](https://man7.org/linux/man-pages/man7/cgroups.7.html) 等操作系统功能，并根据 Docker 守护进程的请求启动和运行容器。
+- **docker-buildx-plugin**：使用 [BuildKit](https://docs.docker.com/build/buildkit) 扩展镜像构建能力的 CLI 插件。
+- **docker-compose-plugin**：用于定义和运行多容器应用的插件。
 
 #### 检查 Docker 是否正常工作
 
-安装好 Docker 后，你可以启动一个基本的容器来检查它是否正常工作。 Docker Hub 上的 [hello-world 镜像](https://hub.docker.com/_/hello-world)是个不错的选择。
-
-运行以下命令，使用该镜像启动一个容器：
+安装完成后，可以运行一个简单的容器来检查 Docker 是否正常工作。这里使用 Docker Hub 提供的 [hello-world 镜像](https://hub.docker.com/_/hello-world)：
 
 ```bash
 # !focus(1)
@@ -98,44 +98,42 @@ To generate this message, Docker took the following steps:
     to your terminal.
 ```
 
-容器启动后，它会打印一条确认信息并退出。
+Docker 会下载镜像、启动容器，并在终端中打印确认信息。随后，容器会自动退出。
 
-现在，你已经成功安装并启动了 Docker Engine。
+看到上面的输出，说明 Docker Engine 已经可以正常运行。
 
 ## Docker 基础知识
 
-在开始正确使用 Docker 之前，了解你会遇到的两个主要概念非常重要：
+开始使用 Docker 之前，你需要先理解镜像和容器的区别：
 
-- image（镜像）：所有容器都是从镜像启动的。镜像定义了容器文件系统的初始状态。它类似于传统虚拟机的安装介质。在 [Docker Hub](https://hub.docker.com) 等公共存储库中有预构建的镜像，其中包括常用[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)的选项。
-- container（容器）：容器是镜像的一个实例。它是一个独立于其他容器和主机上现有进程的运行进程。你可以同时启动多个相同镜像的容器。容器在镜像之上有一个可写文件系统层，允许进行修改。
+- image（镜像）：所有容器都从镜像启动。镜像定义了容器文件系统的初始状态，类似于传统虚拟机的安装介质。你可以从 [Docker Hub](https://hub.docker.com) 等公共仓库获取预构建镜像，其中包括常用的[操作系统](https://hub.docker.com/_/ubuntu)和[应用程序](https://hub.docker.com/_/postgres)。
+- container（容器）：容器是镜像的运行实例。它作为独立进程运行，与其他容器和主机上的现有进程隔离。你可以从同一个镜像启动多个容器，每个容器都会在镜像之上拥有一个可写的文件系统层。
 
-现在，你可以开始自信地使用容器（运行进程）和镜像（你启动容器的可重用模板）了。
-
-[查看 Docker 架构概述](https://spacelift.io/blog/docker-architecture)。
+简单来说，镜像是可以重复使用的模板，容器则是由这个模板启动的运行进程。
 
 ## 使用 Docker
 
-将软件打包成容器使其更具可移植性，从而消除环境之间的差异。你可以在个人主机、生产环境和 CI/CD 基础架构中使用容器。看看 [Spacelift](https://spacelift.io) 如何使用 Docker 容器来运行 CI 作业。你可以自带 Docker 镜像[并将其用作运行程序](https://docs.spacelift.io/integrations/docker)，以加快利用第三方工具的部署速度。Spacelift 的官方运行程序镜像可在[此处](https://github.com/spacelift-io/runner-terraform)找到。
+将软件打包成容器，可以减少不同环境之间的差异。同一个容器既能运行在个人主机上，也能用于生产环境和 CI/CD 基础设施。
 
-准备好使用 Docker 了吗？让我们开始吧！
+理解这些概念后，我们可以开始使用 Docker CLI 完成常见操作。
 
 ### 运行容器
 
-**docker run** 命令用于从镜像启动容器。在上一节检查安装情况时，你运行了一个简单的容器：
+**docker run** 命令用于从镜像启动容器。在检查 Docker 安装时，你已经运行过下面的命令：
 
 ```bash bash
 docker run hello-world:latest
 ```
 
-该命令接受要运行的镜像名称作为参数，镜像名称冒号后面的标签，用于识别不同的版本和变体。
+**docker run** 接收镜像名称作为参数。镜像名称中冒号后面的部分是标签，用于区分不同版本和变体。
 
-latest 标签是镜像最新版本的约定俗成，但要注意的是，这并不是标准化的，而且可能会出现破坏性更改。最好使用更精确的标签，例如 1.0.0。
+**latest** 通常代表镜像的最新版本，但这不是强制标准，而且新版本可能带来破坏性更改。因此，最好使用 **1.0.0** 这类更精确的标签。
 
 #### 后台运行容器
 
-hello-world 镜像会运行一个进程，然后立即退出。然而，现实世界中的大多数容器化应用并非如此。它们通常是服务器等长期进程，会无限期运行，直到容器停止。
+**hello-world** 镜像只会运行一个进程，然后立即退出。实际应用中的容器通常会运行服务器等长期进程，直到容器被停止。
 
-**-d** 标志指示 Docker CLI 脱离容器，让进程在后台运行。你将返回到终端提示符。
+添加 **-d** 标志后，Docker CLI 会与容器分离，让进程在后台继续运行，并将终端控制权交还给你：
 
 ```bash bash
 docker run -d nginx:latest
@@ -143,7 +141,9 @@ docker run -d nginx:latest
 
 ### 创建镜像
 
-镜像通常使用 [Dockerfile](/posts/docker-dockerfile) 创建，这些文本文件包含一系列组装镜像文件系统的指令。复制以下示例并将其保存到新目录中名为 Dockerfile 的文件中：
+镜像通常通过 [Dockerfile](/posts/docker-dockerfile) 创建。Dockerfile 是一个文本文件，其中包含组装镜像文件系统所需的指令。
+
+新建一个目录，并将下面的内容保存到其中的 Dockerfile：
 
 ```dockerfile Dockerfile
 FROM node:latest
@@ -152,13 +152,13 @@ ENTRYPOINT ["node"]
 CMD ["app.js"]
 ```
 
-接下来，将以下 JavaScript 代码保存到同一目录下的 app.js：
+然后，在同一目录中创建 **app.js**：
 
 ```javascript app.js
 console.log('It works!');
 ```
 
-现在运行以下命令来构建镜像：
+现在，运行下面的命令构建镜像：
 
 ```bash
 # !focus(1)
@@ -169,43 +169,43 @@ Successfully built 80890ed154fa
 Successfully tagged demo-image:latest
 ```
 
-该命令指示 Docker 在工作目录（由 **.** 参数指示）中构建 Dockerfile，并将输出标记为 demo-image\:latest。接下来会发生以下步骤：
+这条命令会使用当前工作目录中的 Dockerfile 构建镜像，并将结果标记为 **demo-image:latest**。构建过程包含以下步骤：
 
-1. FORM 语句指示 Docker 使用 node\:latest 镜像作为新镜像的基础。之后的指令将应用于 node\:latest 镜像的文件系统之上。
-2. COPY 语句会将应用程序的源代码从工作目录复制到容器中。
-3. 该镜像已配置为在容器启动时运行 node，并将应用程序的代码作为其参数。
+1. 第一条语句指定以 **node:latest** 镜像作为新镜像的基础，后续指令会应用在它的文件系统之上。
+2. **COPY** 语句将应用源代码从工作目录复制到容器中。
+3. 镜像会在容器启动时运行 **node**，并将应用代码作为参数传入。
 
-尝试使用你的镜像启动一个容器：
+构建完成后，使用这个镜像启动一个容器：
 
 ```bash bash
 docker run demo-image:latest
 ```
 
-你的代码已在容器化 Node.js 环境中运行。
+此时，代码会在容器化的 Node.js 环境中运行。
 
 ### 推送镜像到注册表
 
-推送到注册表是镜像作者身份的下一步，目前，你的镜像仅限于你自己的主机。注册表允许在同行、团队成员和更广泛的社区中分发镜像。
+当前构建的镜像只存在于本地主机。将镜像推送到注册表后，团队成员和其他用户就可以获取并运行它。
 
-[Docker Hub](https://hub.docker.com) 是最大的注册中心，你可以免费注册。在推送到你的账户之前，你需要通过运行 **docker login** 并按照提示操作来验证 Docker CLI。
+[Docker Hub](https://hub.docker.com) 是最大的镜像注册中心，你可以免费注册。推送镜像之前，先运行 **docker login**，然后按照提示完成 Docker CLI 身份验证：
 
 ```bash bash
 docker login
 ```
 
-接下来，你必须为你的镜像添加特殊标签，以便它能引用你的 Docker Hub 用户名。以下命令会在现有镜像中添加另一个标签，将 **\<DOCKER_HUB_USERNAME>** 替换为真实的 Docker Hub 用户名：
+接下来，为镜像添加一个包含 Docker Hub 用户名的标签。将 **\<DOCKER_HUB_USERNAME>** 替换为你的真实用户名：
 
 ```bash
 docker tag demo-image:latest <DOCKER_HUB_USERNAME>/demo-image:latest
 ```
 
-使用 **docker push** 命令上传镜像。Docker CLI 会自动从镜像的标签中推导出注册表 URL。
+使用 **docker push** 上传镜像。Docker CLI 会根据镜像标签自动推导注册表 URL：
 
 ```bash
 docker push <DOCKER_HUB_USERNAME>/demo-image:latest
 ```
 
-现在，其他用户可以使用你的镜像启动容器，即使镜像尚未在他们的主机上！
+镜像上传后，其他用户即使没有在本地主机上构建过它，也可以直接启动容器：
 
 ```bash
 docker run <DOCKER_HUB_USERNAME>/demo-image:latest
@@ -213,7 +213,7 @@ docker run <DOCKER_HUB_USERNAME>/demo-image:latest
 
 ### 查看主机上的容器
 
-你可以使用 **docker ps** 命令查看主机上的容器。默认情况下，它只会显示当前正在运行的容器：
+使用 **docker ps** 可以查看主机上的容器。默认情况下，它只显示正在运行的容器：
 
 ```bash
 # !focus(1)
@@ -223,7 +223,7 @@ CONTAINER ID   IMAGE                           COMMAND                  	CREATED
 0000ac4e7eba   nginx:latest                    "/docker-entrypoint...."   	3 seconds ago   Up 1 minute
 ```
 
-要查看所有容器，包括已经停止和已退出的容器，请添加 **-a** 标志：
+添加 **-a** 标志后，可以查看包括已停止和已退出容器在内的全部容器：
 
 ```bash
 # !focus(1)
@@ -235,17 +235,17 @@ CONTAINER ID   IMAGE                           COMMAND                  	CREATED
 a45b50521fc0   hello-world:latest              "/hello"                 	2 minutes ago   Exited (0) 2 minutes ago
 ```
 
-该命令提供了每个容器的 ID 和当前状态。要获取单个容器的更详细信息，请将其 ID 或名称传给 **docker inspect**：
+输出中包含每个容器的 ID 和当前状态。如果需要查看某个容器的详细信息，可以将它的 ID 或名称传给 **docker inspect**：
 
 ```bash bash
 docker inspect 8cf6ed7f95fe
 ```
 
-这会产生详细的 JSON 输出，其中包括与容器相关的所有数据。
+该命令会输出一段 JSON，其中包含与这个容器相关的详细数据。
 
 ### 启动、停止和删除容器
 
-可以通过向 **docker stop** 命令传递容器和 ID 或名称，来停止具有长期进程的独立容器：
+对于运行长期进程的容器，可以将容器 ID 或名称传给 **docker stop** 来停止它：
 
 ```bash
 # !focus(1)
@@ -257,19 +257,19 @@ docker stop nginx
 nginx
 ```
 
-使用 **docker start** 命令以相同的配置重新启动容器。请注意，之前运行时对文件系统所做的任何修改都将丢失。
+使用 **docker start** 可以按照相同配置重新启动容器。需要注意，容器上一次运行时对文件系统所做的修改会丢失。
 
 ```bash bash
 docker start nginx
 ```
 
-要删除容器，请使用容器的 ID 或名称运行 **docker rm**：
+如果不再需要某个容器，可以将它的 ID 或名称传给 **docker rm**：
 
 ```bash bash
 docker rm nginx
 ```
 
-如果容器正在运行，则需要添加 **--force** 标志来确认你的意图：
+正在运行的容器无法直接删除。此时需要添加 **--force** 标志，确认强制删除：
 
 ```bash bash
 docker rm nginx --force
@@ -277,7 +277,7 @@ docker rm nginx --force
 
 ### 查看和删除镜像
 
-**docker images** 命令可以查看主机上的镜像，包括它们的创建时间和大小：
+使用 **docker images** 可以查看主机上的镜像，以及它们的创建时间和大小：
 
 ```bash
 # !focus(1)
@@ -287,33 +287,31 @@ nginx                         latest    3964ce7b8458   6 days ago      142MB
 hello-world                   latest    feb5d9fea6a5   15 months ago   13.3kB
 ```
 
-要删除镜像，请将其 ID 或名称传递给 **docker rmi**：
+要删除镜像，将它的 ID 或名称传给 **docker rmi**：
 
 ```bash bash
 docker rmi hello-world:latest
 ```
 
-如果正在运行的容器正在使用镜像，则无法删除镜像。需要先删除容器，再删除镜像。
-
-查看我们的 [Docker CLI 命令备忘录](https://spacelift.io/blog/docker-commands-cheat-sheet)。
+如果某个容器正在使用该镜像，Docker 不会删除它。你需要先删除容器，再删除镜像。
 
 ## 高级主题
 
-现在你已经学会了基础知识，下面是一些更先进的实际应用技术。
+掌握基本操作后，可以继续了解端口映射、数据持久化、日志查看和容器内命令执行。
 
 ### 端口映射
 
-端口映射允许你使用主机的网络接口访问运行在容器中的应用程序。在上面的一些示例中，使用 nginx\:latest 镜像启动了运行 Nginx Web 服务器的容器。由于没有映射端口，因此无法从 Docker 主机外部访问 Nginx。
+端口映射让你可以通过主机的网络接口访问容器中的应用。前面的示例使用 **nginx:latest** 启动了一个 Nginx Web 服务器，但由于没有映射端口，你无法从 Docker 主机外部访问它。
 
-要映射端口，请在启动容器时添加 **-p** 标志：
+启动容器时添加 **-p** 标志，即可建立端口映射：
 
 ```bash bash
 docker run --name nginx -p 8800:80 -d nginx:latest
 ```
 
-此示例将主机上的 8800 端口与 Nginx 监听的容器内 80 端口映射。
+这个示例将主机的 **8800** 端口映射到容器内 Nginx 监听的 **80** 端口。
 
-现在你可以向 localhost:8800 发送请求，并从容器化网络服务器获取响应：
+现在，向 **localhost:8800** 发送请求，就能获得容器中 Web 服务器的响应：
 
 ```bash
 # !focus(1)
@@ -328,27 +326,29 @@ curl localhost:8800
 
 ### 使用卷来存储容器数据
 
-容器注定是短暂的。虽然它们的文件系统是可写的，但在容器停止后，你所做的任何更改都会丢失。你不应该认为容器会无限期运行，因为它可能因应用程序崩溃或主机重启而停止。
+容器是短暂的。虽然容器文件系统可以写入数据，但容器停止后，这些修改也会丢失。应用崩溃或主机重启都可能导致容器停止，因此不应该假设容器会一直运行。
 
-[卷](https://docs.docker.com/storage/volumes)是一种在容器内持久化数据的机制。卷是挂载到容器文件系统中的存储单元。写入卷的数据存储在容器之外，因此可以在原始容器停止运行后重新连接到替换容器。
+[卷](https://docs.docker.com/storage/volumes)用于持久化容器中的数据。它会作为存储单元挂载到容器文件系统中，而实际数据存储在容器之外。
 
-你可以使用 **docker run** 的 **-v** 标志来挂载卷：
+因此，即使原容器已经停止，你仍然可以将同一个卷连接到替换容器。
+
+使用 **docker run** 的 **-v** 标志可以挂载卷：
 
 ```bash bash
 docker run -v my_volume:/container/mount/point my-image:latest
 ```
 
-或者，也可以将主机文件系统中的目录直接绑定到容器中：
+你也可以将主机文件系统中的目录直接绑定到容器中：
 
 ```bash bash
 docker run -v $PWD:/container/mount/point my-image:latest
 ```
 
-这种方法非常适合开发阶段使用。你对绑定源代码目录所做的任何更改将立即反映在容器中。
+这种方式适合开发阶段。绑定源代码目录后，你对主机文件所做的修改会立即反映到容器中。
 
 ### 查看容器日志
 
-Docker 会自动从容器前台进程的标准输出和错误流中收集日志。你可以通过向 **docker logs** 命令传递容器 ID 或名称来访问这些日志：
+Docker 会自动收集容器前台进程的标准输出和错误流。将容器 ID 或名称传给 **docker logs**，即可查看这些日志：
 
 ```bash
 # !focus(1)
@@ -360,25 +360,27 @@ docker logs nginx
 172.17.0.1 - - [20/Dec/2022:21:10:06 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/7.81.0" "-"
 ```
 
-这样，你就可以查看应用程序的活动并发现任何错误。
+通过这些日志，你可以了解应用的运行情况并定位错误。
 
-要不断向终端发送新日志，请在命令中添加 **--follow** 标志：
+如果需要持续接收新日志，可以添加 **--follow** 标志：
 
 ```bash bash
 docker logs nginx --follow
 ```
 
-按 **Ctrl + C** 停止查看日志。
+按 **Ctrl + C** 即可停止跟踪日志。
 
 ### 容器内执行命令
 
-最后一个提示：有时你可能需要进入容器内部，以调试问题或运行镜像中的管理工具。你可以使用 **docker exec** 命令在现有容器中运行一个进程：
+调试问题或运行镜像中的管理工具时，你可能需要在容器内部执行命令。**docker exec** 可以在已经运行的容器中启动一个新进程：
 
 ```bash
 docker exec <CONTAINER> <COMMAND>
 ```
 
-将容器 ID 或名称作为 **\<CONTAINER>**，然后将命令及参数作为 **\<COMMAND>**。如果使用 shell 的名称作为命令，就会在容器内获得一个交互式终端会话。要实现这一点，你还必须向 **docker exec** 传递 **-i** 和 **-t** 标志，以连接终端的标准输入流和设置 TTY。
+将容器 ID 或名称填写到 **\<CONTAINER>**，将要运行的命令及参数填写到 **\<COMMAND>**。如果命令是一个 shell，就可以在容器内开启交互式终端会话。
+
+此时还需要传入 **-i** 和 **-t** 标志，用于连接终端的标准输入流并设置 TTY：
 
 ```bash
 # !focus(1)
@@ -387,10 +389,10 @@ docker exec -it nginx bash
 root@58661670f1ad:/#
 ```
 
-现在你可以检查容器的文件系统并运行任何需要的命令。
+进入容器后，你就可以检查它的文件系统并执行所需命令。
 
 ## 要点
 
-Docker 是最受开发人员欢迎的容器化平台。你可以使用 Docker CLI 运行容器和构建镜像，如果喜欢图形界面，也可以选择 Docker Desktop。Docker 创建的镜像也可用于任何其他兼容 OCI 的容器环境，如 [Podman](https://podman.io) 或 [Kubernetes](https://kubernetes.io)。
+Docker 提供了一套完整的容器构建和运行工具。你可以使用 Docker CLI 运行容器、构建镜像并管理相关资源，也可以通过 Docker Desktop 的图形界面完成这些操作。
 
-感谢 James Walker。
+Docker 创建的镜像遵循 OCI 标准，因此也可以在 [Podman](https://podman.io) 或 [Kubernetes](https://kubernetes.io) 等兼容 OCI 的容器环境中使用。

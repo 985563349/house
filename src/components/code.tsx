@@ -66,7 +66,7 @@ const focus: AnnotationHandler = {
   Line: (props) => (
     <InnerLine
       merge={props}
-      className="px-2 blur-xs transition-[filter] duration-300 ease-in-out hover:blur-none group-hover:blur-none data-focus:blur-none"
+      className="px-2 blur-xs transition-[filter] duration-300 ease-in-out group-hover:blur-none data-focus:blur-none"
     />
   ),
   AnnotatedLine: ({ annotation, ...props }) => (
@@ -99,7 +99,7 @@ const Code: React.FC<CodeProps> = async ({ codeblock }) => {
         <Pre
           code={highlighted}
           handlers={[mark, diff, focus]}
-          className="not-prose overflow-x-auto py-4 text-sm bg-transparent overscroll-x-contain scrollbar-none"
+          className="group not-prose overflow-x-auto py-4 text-sm bg-transparent overscroll-x-contain scrollbar-none"
         />
       </div>
     </div>
