@@ -1,0 +1,794 @@
+---
+title: '深入理解数据库事务与锁：从 ACID 到并发控制'
+date: 2026-09-21T00:00:00.000Z
+description: '理解数据库事务、隔离级别与锁，掌握并发控制的核心原理。'
+categories:
+  - Database
+  - PostgreSQL
+  - FastAPI
+---
+
+在开发涉及数据库读写的 Web 应用时，我们经常会遇到这些问题：
+
+- 两个用户同时购买最后一件商品，会不会超卖？
+- 两个请求同时修改余额，为什么会丢失更新？
+- 已经开启了数据库事务，为什么数据还是不正确？
+- 行锁、表锁、共享锁和排他锁之间有什么关系？
+
+这些问题看起来分散，实际上都与数据库并发控制有关。要找到合适的解决方案，我们需要先理解以下概念：
+
+- 数据库事务与 ACID
+- 常见的并发异常
+- 事务隔离级别
+- MVCC 的作用
+- 锁的模式、粒度与使用策略
+
+理解这些概念后，我们将结合 PostgreSQL、FastAPI 和 SQLModel 进行实践。
+
+## 业务不变量
+
+在开始之前，首先我们需要明确一个问题：当多个请求同时读写数据时，我们究竟需要保护什么？
+
+以订单系统为例，系统中可能存在以下业务规则：
+
+- 商品库存不能小于 0
+- 每笔账户余额变更都必须准确生效
+- 同一个请求不能生成两笔订单
+- 转账时扣款和入账必须同时成功
+
+这些始终需要成立的规则，通常被称为业务不变量。
+
+## 数据库事务与 ACID
+
+事务是一组需要作为整体执行的数据库操作。
+
+例如，一次转账包含扣款和入账两个操作，我们可以将它们放在同一个事务中：
+
+```sql
+BEGIN;
+
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+
+COMMIT;
+```
+
+事务具有明确的开始和结束边界，事务中的操作会在同一个事务上下文中依次执行，全部成功时才算执行成功。
+
+ACID 描述了数据库事务的四个基本属性，分别是：原子性 (Atomicity)、一致性 (Consistency)、隔离性 (Isolation) 和持久性 (Durability)。
+
+### 原子性
+
+原子性表示一个事务中的操作要么全部成功，要么全部失败。
+
+例如，在上述的转账事务中，如果第二条 SQL 执行失败，那么第一条 SQL 也必须回滚，否则钱就会凭空消失。
+
+### 一致性
+
+一致性表示事务成功提交前后，数据都应满足已经定义的约束和业务规则。
+
+通常，我们可以通过数据库约束保护一部分规则：
+
+```sql
+ALTER TABLE products
+
+ADD CONSTRAINT stock_non_negative CHECK (stock >= 0);
+```
+
+数据库只能自动维护已经声明的约束，无法自行理解业务规则。
+
+例如，“一张有效订单必须至少包含一个订单项” 无法通过简单的 CHECK 或外键约束完整表达。我们还需要结合数据模型、应用逻辑和适当的并发控制来保护这条规则。
+
+### 隔离性
+
+隔离性描述多个事务并发执行时，一个事务能够观察到其他事务的哪些结果，以及发生冲突时数据库如何处理。
+
+隔离并不意味着所有事务都必须排队执行。现代数据库通常结合 MVCC 和锁，在保证隔离性的同时减少事务之间的阻塞。
+
+### 持久性
+
+持久性表示事务一旦成功提交，已经提交的数据就应该被保存下来。
+
+数据库通常会通过 WAL，也就是预写日志，来实现持久性。
+
+> 需要注意的是，开启事务只能获得数据库在当前隔离级别下提供的保证。事务能够保证一组操作原子提交，但不会自动让所有并发操作串行执行。
+
+## 常见的并发异常
+
+只要多个事务同时读写相同的数据，就可能发生并发异常。
+
+### 脏读
+
+脏读表示一个事务读取了另一个事务尚未提交的数据。
+
+```txt
+事务 A：将余额从 100 修改为 0，但是还没有提交
+事务 B：读取余额，得到 0
+事务 A：回滚，余额恢复为 100
+```
+
+事务 B 读取到的 0 从未真正提交过。
+
+### 不可重复读
+
+不可重复读表示同一个事务两次读取同一行，得到了不同结果。
+
+```txt
+事务 A：读取余额，得到 100
+事务 B：将余额修改为 200，并提交
+事务 A：再次读取余额，得到 200
+```
+
+### 幻读
+
+幻读表示同一个事务两次执行范围查询，得到的行集合不同。
+
+```txt
+事务 A：查询金额大于 1000 的订单，得到 5 行
+事务 B：插入一条金额为 2000 的订单，并提交
+事务 A：再次查询，得到 6 行
+```
+
+不可重复读关注同一行被修改或删除，幻读关注符合查询条件的行出现或消失。
+
+### 丢失更新
+
+丢失更新表示两个事务基于同一个旧值计算新值，后写入的数据覆盖了先写入的数据。
+
+```txt
+初始余额为 100
+
+事务 A 读取 100，准备增加 20
+事务 B 读取 100，准备减少 10
+事务 A 写入 120
+事务 B 写入 90
+```
+
+事务 A 增加的 20 被事务 B 覆盖，这就是丢失更新。
+
+### 写偏差
+
+写偏差表示两个事务读取了相同的数据状态，但是修改了不同的数据行，最终共同破坏了业务规则。
+
+例如，系统要求一张有效订单至少包含一个订单项：
+
+```txt
+订单中包含订单项 A 和订单项 B
+事务 A 看到两个订单项，于是删除订单项 A
+事务 B 也看到两个订单项，于是删除订单项 B
+```
+
+两个事务修改的是不同行，因此单行写冲突无法阻止它们同时提交。最终订单中没有任何订单项，业务规则被破坏。
+
+## 事务隔离级别
+
+SQL 标准定义了四种事务隔离级别：
+
+| 隔离级别                    | 脏读 | 不可重复读 | 幻读       |
+| --------------------------- | ---- | ---------- | ---------- |
+| 读未提交 (Read Uncommitted) | 可能 | 可能       | 可能       |
+| 读已提交 (Read Committed)   | 防止 | 可能       | 可能       |
+| 可重复读 (Repeatable Read)  | 防止 | 防止       | 标准上可能 |
+| 串行化 (Serializable)       | 防止 | 防止       | 防止       |
+
+隔离级别越高，数据库需要提供的并发保证越强，但事务等待、冲突或重试的概率也会增加。
+
+上面的表格描述的是 SQL 标准。不同数据库可以提供比标准更强的保证，具体行为需要以数据库实现为准。
+
+### 读未提交
+
+读未提交允许事务读取其他事务尚未提交的数据，因此可能出现脏读。
+
+这种隔离级别很少用于需要业务正确性的 Web 应用。
+
+### 读已提交
+
+读已提交只允许读取已经提交的数据，可以防止脏读。
+
+同一事务中的两条查询语句可能看到不同的已提交状态，因此仍然可能出现不可重复读和幻读。
+
+### 可重复读
+
+可重复读要求事务重复读取同一行时，结果保持稳定。
+
+它能够防止脏读和不可重复读，但是否允许幻读，以及如何处理写冲突，由具体数据库实现决定。
+
+### 串行化
+
+串行化要求并发事务的最终结果，等价于这些事务按照某种顺序依次执行。
+
+数据库不一定真的让所有事务排队。它可以先并发执行事务，在发现无法满足串行化时终止其中一个事务，并要求应用重试。
+
+## MVCC
+
+MVCC 的全称是 Multi-Version Concurrency Control，也就是多版本并发控制。
+
+当一行数据被修改时，数据库可以保留多个数据版本。每个事务根据自己的数据快照，读取当时已经提交的数据版本。
+
+因此，一行数据正在被修改时，普通查询通常仍然可以读取符合当前事务快照的数据，而不需要等待写事务结束。
+
+MVCC 的核心作用，是让事务读取一致的数据视图，并尽量减少读操作与写操作之间的阻塞。
+
+## 锁的模式、粒度与使用策略
+
+MVCC 可以减少读写之间的阻塞，但当多个事务同时执行互不兼容的操作时，数据库就需要通过锁等机制协调这些冲突。
+
+我们可以从锁模式、锁粒度和使用策略三个维度理解数据库锁。
+
+### 锁模式
+
+锁模式描述事务取得锁后允许执行什么操作，以及其他事务能否同时取得锁。
+
+最基础的两种锁模式是共享锁和排他锁。
+
+#### 共享锁
+
+也叫读锁，简称 S 锁，可以理解为：“我要读取并保护当前数据，在我使用期间，其他事务不能修改它。”
+
+多个事务可以同时读取同一份数据，因此它们可以同时持有共享锁。但是，只要还有事务持有共享锁，需要修改数据就必须等待。
+
+假设事务 A 和事务 B 都需要读取商品，并确保读取期间库存不会被修改：
+
+```txt
+事务 A：取得共享锁 → 成功
+事务 B：取得共享锁 → 成功
+事务 C：申请排他锁 → 等待
+```
+
+当事务 A 和事务 B 都结束并释放共享锁后，事务 C 才能执行修改库存。
+
+#### 排他锁
+
+也叫写锁，简称 X 锁，可以理解为：“我要修改当前数据，在操作完成前，其他冲突操作必须等待。”
+
+同一份数据在同一时间只能被一个事务持有排他锁。排他锁会阻塞其他事务申请共享锁或排他锁：
+
+```txt
+事务 A：取得排他锁 → 成功
+事务 B：申请共享锁 → 等待
+事务 C：申请排他锁 → 等待
+```
+
+事务 A 提交或回滚后，排他锁被释放，等待中的事务才能继续执行。
+
+这是通用的锁模型。具体数据库可以提供更多锁模式，并定义更细的兼容关系。
+
+> 注意，在采用 MVCC 的数据库中，普通 SELECT 通常以快照方式读取数据，不需要取得会阻塞写入的行级共享锁。这里讨论的共享锁，主要是为了保护读取结果而显式申请的锁。
+
+### 锁粒度
+
+锁粒度描述一个锁保护多大的数据范围。
+
+常见粒度包括：
+
+- 行锁：保护具体的数据行
+- 页锁：保护数据库页中的一组记录
+- 范围锁：保护一个索引范围
+- 表锁：保护整张表上的某类操作
+
+锁模式和锁粒度可以组合使用。例如，一个事务可以取得行级排他锁，也可以取得表级共享锁。
+
+锁的范围越小，并发能力通常越高，但数据库需要管理的锁也更多。
+
+表锁的作用对象是整张表，但不代表所有读写操作都会停止。数据库通常提供多种表级锁模式：较弱的模式可能允许其他事务继续读取或写入，较强的模式才会阻塞并发写入，甚至阻塞普通查询。
+
+表锁通常用于影响整张表或需要保持全表状态稳定的操作，例如修改表结构、清空表、创建索引、批量修正数据等。大多数情况下，数据库会根据 SQL 自动取得合适的表级锁；应用很少需要手动锁表，因为锁的范围较大，会明显降低并发能力。
+
+#### 意向锁
+
+意向锁用于协调行锁和表锁。它不是直接锁住整张表的数据，而是在表级别记录一个信号：“这个事务已经在表中的某些行上加锁，或者准备对这些行加锁。”
+
+假设 products 表中有大量商品，事务 A 正在修改商品 42。如果事务 B 此时申请锁定整张 products 表，数据库需要判断表中是否已经存在与它冲突的行锁。
+
+```txt
+事务 A：在 products 表上记录意向排他锁
+事务 A：对商品 42 取得行级排他锁
+事务 B：申请整张 products 表的排他锁
+数据库：发现表上的意向排他锁，让事务 B 等待
+```
+
+如果没有意向锁，数据库可能需要检查表中的大量行，才能判断是否存在冲突。通过表级别的意向锁，数据库可以快速完成这个判断。
+
+常见的意向锁包括：
+
+- IS：意向共享锁：表示事务准备在表中的某些行上取得共享锁
+- IX：意向排他锁：表示事务准备在表中的某些行上取得排他锁
+
+意向锁通常由数据库自动管理，应用不需要手动申请。不同数据库的名称和实现也不完全相同。IS 和 IX 是 MySQL InnoDB 中的典型名称；PostgreSQL 不直接使用这两个名称，而是通过自己的表级锁模式协调表锁和行锁。
+
+### 使用策略
+
+使用策略描述在什么时候处理并发冲突。
+
+常见的两种策略是：悲观锁和乐观锁。
+
+#### 悲观锁
+
+悲观锁假设并发冲突可能发生，因此会在读取数据时先取得数据库锁，再进行业务判断和修改。
+
+假设两个事务都要修改同一件商品：
+
+```txt
+事务 A：取得商品行锁 → 读取并修改商品
+事务 B：申请同一商品的行锁 → 等待
+事务 A：提交并释放锁
+事务 B：取得锁 → 读取最新数据后继续执行
+```
+
+悲观锁在冲突真正发生前就让事务排队，可以避免多个事务同时基于旧数据进行判断。它适合冲突频繁，或者读取结果必须保持有效才能继续修改的场景。
+
+悲观锁的成本是事务需要持有数据库锁。事务执行时间越长，其他事务等待越久，并且可能出现锁超时或死锁。
+
+#### 乐观锁
+
+乐观锁假设并发冲突较少，因此，读取时不提前锁定数据。事务在写入时，再通过版本号或条件更新检查数据是否已经变化。
+
+假设商品当前的版本号为 7：
+
+```txt
+事务 A：读取商品和版本号 7
+事务 B：读取商品和版本号 7
+事务 A：使用版本号 7 更新成功，版本号变为 8
+事务 B：继续使用版本号 7 更新，检查失败
+```
+
+检查失败说明数据已经被其他事务修改。事务 B 需要放弃当前操作、提示用户，或者重新读取最新数据后重试。
+
+乐观锁在读取数据时不会主动加行锁，也不会在业务处理期间持续持锁；它适合读取较多、写入冲突较少，并且允许失败后重试的场景。如果冲突频繁，大量更新会失败，重试成本反而可能更高。
+
+悲观锁和乐观锁不是新的锁粒度，也不是共享锁和排他锁之外的锁模式。它们描述的是应用如何使用数据库提供的并发控制能力。
+
+### 锁超时与死锁
+
+当一个事务申请的锁与其他事务已经持有的锁冲突时，它通常会进入等待状态。
+
+```txt
+事务 A：持有商品 42 的排他锁
+事务 B：申请商品 42 的排他锁 → 等待
+事务 A：提交并释放锁
+事务 B：取得锁并继续执行
+```
+
+锁等待本身不是错误，它是数据库协调并发操作的正常方式。如果事务 A 长时间不释放锁，事务 B 就会持续等待，并占用数据库连接。
+
+#### 锁超时
+
+为了避免事务无限等待，数据库或应用可以设置锁等待时间。超过限制后，数据库会终止当前等待操作并返回错误，这就是锁超时。
+
+锁超时通常说明某个事务持锁时间过长、一次修改的数据过多，或者系统中存在严重的锁竞争。应用可以根据业务情况返回失败或稍后重试，但更重要的是找到长事务和竞争热点。
+
+#### 死锁
+
+死锁表示多个事务形成了循环等待：每个事务都持有其他事务需要的锁，同时又在等待对方释放锁。
+
+```txt
+事务 A：锁住账户 1，等待账户 2
+事务 B：锁住账户 2，等待账户 1
+```
+
+这种等待无法自行结束。数据库检测到死锁后，会选择其中一个事务作为失败方，回滚它并释放锁，让其他事务继续执行。
+
+锁超时和死锁并不相同：锁超时只是等待超过了时间限制；死锁则是事务之间形成了无法继续执行的循环依赖。
+
+我们可以通过以下方式减少锁等待和死锁：
+
+- 让事务尽可能短，及时提交或回滚
+- 多行加锁时始终使用相同顺序
+- 不在持锁期间执行耗时的网络请求
+- 只锁定业务真正需要的数据
+- 为查询条件建立合适的索引，避免锁定过多记录
+- 对死锁等可恢复错误进行有限次数重试
+
+## FastAPI 与 PostgreSQL 并发实践
+
+掌握上述通用概念后，我们结合 FastAPI、SQLModel 和 PostgreSQL，看看如何在实际应用中解决前面提到的并发问题。
+
+### 配置隔离级别
+
+PostgreSQL 默认使用的隔离级别是 Read Committed。
+
+在 PostgreSQL 中：
+
+- Read Uncommitted：不提供脏读，实际按照 Read Committed 处理。
+- Read Committed：每条 SQL 语句开始时确定快照，同一事务中的两条查询，可能看到其他事务在两条查询之间提交的修改。
+- Repeatable Read：事务第一次执行查询时确定快照，后续普通查询继续使用这个快照，不会出现标准定义的幻读，但遇到并发写冲突时可能中止事务。
+- Serializable：在 Repeatable Read 的快照基础上，检查事务之间的读写依赖。如果并发结果无法对应到任何串行执行顺序，则会中止其中一个事务。
+
+> 注意，在实际项目中，通常以数据库的默认隔离级别为基础，再通过数据库约束、原子 SQL 和小范围加锁解决具体的并发问题。只有这些手段无法可靠保护业务不变量时，才考虑提高隔离级别。
+
+以下示例仅用于演示如何通过 SQLModel 在不同作用范围内配置事务隔离级别。
+
+#### 在 Engine 中设置
+
+创建 Engine 时，可以设置应用默认使用的隔离级别：
+
+```python database.py
+from sqlmodel import create_engine
+
+
+engine = create_engine(
+    "postgresql+psycopg://postgres:password@localhost/app",
+    isolation_level="READ COMMITTED", # 默认隔离级别
+)
+```
+
+Engine 级别的 isolation_level 会作为连接的默认隔离级别，适用于大多数事务。
+
+#### 在 Session 中设置
+
+Session 本身不能直接接收 isolation_level。它会使用所绑定 Engine 的隔离级别。
+
+如果需要为特定 Session 使用不同级别，可以将其绑定到配置了相应隔离级别的派生 Engine：
+
+```python
+from collections.abc import Generator
+from typing import Annotated
+
+from fastapi import Depends
+from sqlmodel import Session
+
+from database import engine
+
+
+def get_session() -> Generator[Session, None, None]:
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+
+# 创建派生 engine
+repeatable_read_engine = engine.execution_options(
+    isolation_level="REPEATABLE READ"
+)
+
+
+def get_repeatable_read_session() -> Generator[Session, None, None]:
+    with Session(repeatable_read_engine) as session:
+        yield session
+
+
+RepeatableReadSessionDep = Annotated[
+    Session,
+    Depends(get_repeatable_read_session),
+]
+```
+
+SessionDep 使用原 Engine 的隔离级别，RepeatableReadSessionDep 使用派生 Engine 的 Repeatable Read。派生 Engine 与原 Engine 共享连接池，不会重新创建一套连接池。
+
+#### 在事务中设置
+
+如果只有某个业务需要更高的隔离级别，可以只在当前事务中设置：
+
+```python
+with session.begin():
+    session.connection(
+        execution_options={"isolation_level": "SERIALIZABLE"}
+    )
+
+    # 在这里执行需要该隔离级别的业务操作
+    ...
+```
+
+**session.connection()** 必须在当前事务执行其他查询或修改之前调用。事务结束并释放连接后，隔离级别会恢复为 Engine 的默认配置，不会影响后续事务。
+
+不同隔离级别的事务可以同时执行，各自按自己的隔离规则读取数据，并可能因写入冲突而等待或失败。
+
+### 开启事务
+
+SQLModel 的 Session 默认支持自动开启事务（autobegin）。
+
+当我们调用 **session.add()**、**session.exec()** 等方法时，Session 会自动进入事务状态。
+
+```python
+try:
+    session.add(product)
+    session.add(order)
+    session.commit()
+except Exception:
+    session.rollback()
+    raise
+```
+
+自动开启事务不会自动提交，写入仍需调用 **commit()**。异常直接抛出并关闭 Session 时，未提交的事务会回滚。
+
+如果捕获异常后需要继续使用同一个 Session，则应先调用 **rollback()**。
+
+另外，当你期望事务在成功时自动提交、发生异常时自动回滚，可以使用 **with session.begin()**：
+
+```python
+with session.begin():
+    session.add(product)
+    session.add(order)
+```
+
+### 并发场景实践
+
+下面以库存扣减、转账和任务领取为例，看看如何运用事务与锁处理具体的并发问题。
+
+#### 使用原子 SQL 扣减库存
+
+对于简单的库存扣减，最合适的方式不是先查询库存，而是直接执行一条原子 UPDATE。
+
+```python
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Field, SQLModel, update
+
+from dependencies import SessionDep
+from models import Product
+
+
+router = APIRouter(prefix="/orders", tags=["orders"])
+
+
+class CreateOrderRequest(SQLModel):
+    product_id: int
+    quantity: int = Field(default=1, gt=0)
+
+
+@router.post("")
+def create(payload: CreateOrderRequest, session: SessionDep):
+    with session.begin():
+        session.exec(
+            update(Product)
+            .where(
+                Product.id == payload.product_id,
+                Product.stock >= payload.quantity,
+            )
+            .values(stock=Product.stock - payload.quantity)
+        )
+
+      ...
+```
+
+UPDATE 执行时，PostgreSQL 会锁定目标行。并发请求需要在这行上依次完成条件检查和更新。
+
+如果只剩最后一件可售库存，第一个请求将库存改为 0 后，第二个请求不再满足 **stock > 0**，因此只会有一次扣减成功，不会因并发扣减而超卖。
+
+#### 使用悲观锁完成转账
+
+转账需要先检查余额，再同时修改两个账户，因此适合使用事务和悲观行锁。
+
+PostgreSQL 提供四种显式行锁模式：
+
+| SQL               | 模式   | 主要用途                         |
+| ----------------- | ------ | -------------------------------- |
+| FOR KEY SHARE     | 共享锁 | 防止删除行或修改被外键引用的键值 |
+| FOR SHARE         | 共享锁 | 共享锁定读取                     |
+| FOR NO KEY UPDATE | 排他锁 | 准备更新非关键字段               |
+| FOR UPDATE        | 排他锁 | 准备更新或删除数据               |
+
+日常业务中最常见的是 FOR UPDATE。它会阻止其他事务修改、删除或取得与之冲突的行锁，直到当前事务提交或回滚。
+
+为了避免两个转账以相反顺序锁定账户，我们始终按照账户 ID 从小到大加锁：
+
+```python
+from decimal import Decimal
+
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Field, SQLModel, select
+
+from dependencies import SessionDep
+from models import Account
+
+
+router = APIRouter(prefix="/transfers", tags=["transfers"])
+
+
+class TransferRequest(SQLModel):
+    source_id: int
+    target_id: int
+    amount: Decimal = Field(gt=0)
+
+
+@router.post("")
+def transfers(payload: TransferRequest, session: SessionDep):
+    source_id = payload.source_id
+    target_id = payload.target_id
+    amount = payload.amount
+
+    if source_id == target_id:
+        raise HTTPException(status_code=400, detail="转账账户不能相同")
+
+    with session.begin():
+        ids = sorted((source_id, target_id))
+
+        accounts = {
+            acc.id: acc
+            for acc in session.exec(
+                select(Account)
+                .where(Account.id.in_(ids))
+                .with_for_update()
+            ).all()
+        }
+
+        source = accounts.get(source_id)
+        target = accounts.get(target_id)
+
+        if source is None:
+            raise HTTPException(status_code=404, detail="源账户不存在")
+
+        if target is None:
+            raise HTTPException(status_code=404, detail="目标账户不存在")
+
+        if source.balance < amount:
+            raise HTTPException(status_code=409, detail="余额不足")
+
+        source.balance -= amount
+        target.balance += amount
+
+    ...
+```
+
+FOR UPDATE 会让其他修改相同账户的事务等待，并且使用固定加锁顺序可以降低死锁概率。
+
+事务保证扣款和入账一起提交，行锁保证余额判断和修改不会基于已经失效的数据。
+
+这也说明了为什么只有事务还不够：原子性解决“两个更新是否一起成功”，行锁解决“计算时读取的数据是否仍然有效”。
+
+#### 使用乐观锁更新数据
+
+如果数据冲突较少，并且请求可以重新提交，就可以使用乐观锁。
+
+通常我们会在表中增加一个数据版本号字段来实现。
+
+```python
+class Product(SQLModel, table=True):
+    __tablename__ = "products"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    price: Decimal
+    version: int = Field(default=1, nullable=False)
+```
+
+之后，客户端读取商品时需要同时得到 version，提交修改时再把原来的 version 发送回来。
+
+```python
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Field, SQLModel, update as sql_update
+
+from dependencies import SessionDep
+from models import Product
+
+
+router = APIRouter(prefix="/products", tags=["products"])
+
+
+class UpdateProductRequest(SQLModel):
+    name: str
+    version: int = Field(ge=1)
+
+
+@router.patch("/{id}")
+def update(
+    id: int,
+    payload: UpdateProductRequest,
+    session: SessionDep
+):
+    with session.begin():
+        result = session.exec(
+            sql_update(Product)
+            .where(
+                Product.id == id,
+                Product.version == payload.version,
+            )
+            .values(
+                name=payload.name,
+                version=Product.version + 1,
+            )
+        )
+
+        if result.rowcount != 1:
+            raise HTTPException(status_code=409, detail="数据已经被其他请求修改")
+
+    ...
+```
+
+只有版本仍然匹配的请求能够更新成功。其他请求会得到 409，并重新读取最新数据。
+
+乐观锁并不是完全不使用数据库锁。UPDATE 真正执行时，数据库仍然需要取得写锁。它的特点是不在读取阶段长期持锁。
+
+#### 使用 SKIP LOCKED 领取任务
+
+如果多个 FastAPI Worker 需要从数据库中领取任务，我们通常不希望它们等待同一行锁。
+
+这时就可以使用 SKIP LOCKED：
+
+```python
+from sqlmodel import Session, select
+
+from database import engine
+from models import Job
+
+
+def claim():
+    with Session(engine) as session:
+        with session.begin():
+            statement = (
+                select(Job)
+                .where(Job.status == "pending")
+                .order_by(Job.id)
+                .with_for_update(skip_locked=True)
+                .limit(1)
+            )
+
+            job = session.exec(statement).one_or_none()
+
+            if job is not None:
+                return None
+
+            job.status = "processing"
+
+    ...
+```
+
+如果一个任务已经被其他 Worker 锁定，当前 Worker 会跳过它，并尝试领取下一个任务。
+
+任务状态必须在同一个事务中更新。提交之后，其他 Worker 才会看到这条任务已经进入 processing 状态。
+
+### 重试事务
+
+当 PostgreSQL 检测到序列化冲突或死锁时，会中止其中一个事务，并分别返回 **SQLSTATE 40001** 和 **40P01**。被中止的事务无法继续执行，应用必须创建新的事务，重新执行其中的查询、判断和修改。
+
+下面使用 Tenacity 对这两类错误进行有限重试，并统一管理重试次数和等待时间：
+
+```python
+from fastapi import APIRouter
+from sqlalchemy.exc import DBAPIError
+from sqlmodel import Session
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
+
+from dependencies import SessionDep
+
+
+def is_retryable(error: BaseException) -> bool:
+    if not isinstance(error, DBAPIError):
+        return False
+
+    sqlstate = getattr(error.orig, "sqlstate", None)
+
+    return sqlstate in {"40001", "40P01"}
+
+
+@retry(
+    retry=retry_if_exception(is_retryable),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=0.1, min=0.05, max=1.5),
+    reraise=True,
+)
+def execute(session: Session):
+    with session.begin():
+      ...
+
+
+router = APIRouter(prefix="/transactions", tags=["transactions"])
+
+
+@router.post("/retry")
+def run(session: SessionDep):
+    return execute(session)
+```
+
+Tenacity 最多调用 **execute()** 五次，并在重试之间使用指数退避。**is_retryable()** 保证只有 40001 和 40P01 会触发重试，其他异常会直接抛出。
+
+重试函数中的操作必须可以安全重复执行。短信、支付请求和消息发送等外部操作无法随数据库事务一起回滚，不应直接放在重试范围内。
+
+### 决策心智
+
+在选择并发控制方案时，可以按照下面的顺序进行判断：
+
+1. 规则能够由数据库直接表达时，优先使用 NOT NULL、唯一约束、外键或 CHECK 约束。
+2. 条件判断和数据修改能够在同一条 SQL 中完成时，优先使用条件 UPDATE 等原子操作。
+3. 必须先读后写时，如果冲突较少并且请求可以重新提交，可以使用乐观锁；如果后续判断必须基于仍然有效的读取结果，可以使用悲观锁。
+4. 规则涉及多行或多表时，可以锁定一条稳定的父记录，并确保所有相关业务路径遵循相同的加锁规则；没有合适的锁定对象时，再考虑 Serializable，并处理事务重试。
+
+## 最后
+
+事务、隔离级别和锁并不是目标。它们是数据库在并发环境中保护业务不变量的工具。

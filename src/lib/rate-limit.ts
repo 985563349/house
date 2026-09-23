@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIp } from 'next-request-ip';
 import { RateLimiterMemory, type RateLimiterRes } from 'rate-limiter-flexible';

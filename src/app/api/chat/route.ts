@@ -14,7 +14,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
 
 import { withRateLimit } from '@/lib/rate-limit';
-import { getSystemPrompt } from '@/lib/prompt';
+import { generateSystemPrompt } from '@/lib/prompt';
 
 function withoutToolParts<T extends ToolSet>(
   stream: ReadableStream<TextStreamPart<T>>,
@@ -41,7 +41,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
 
   const result = streamText({
     model: provider(process.env.NEXT_OPENAI_MODEL_ID!),
-    instructions: await getSystemPrompt(),
+    instructions: await generateSystemPrompt(),
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     stopWhen: isStepCount(3),
