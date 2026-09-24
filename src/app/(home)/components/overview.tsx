@@ -1,3 +1,4 @@
+import { cn } from 'cn';
 import {
   CodeXmlIcon,
   CakeIcon,
@@ -6,8 +7,6 @@ import {
   MailIcon,
 } from 'lucide-react';
 import { PiWechatLogoBold } from 'react-icons/pi';
-
-import { cn } from '@/lib/utils';
 
 import Badge from '@/components/badge';
 

@@ -11,12 +11,13 @@ import {
 } from 'react';
 import type { ComponentProps, HTMLAttributes, ReactElement } from 'react';
 import type { UIMessage } from 'ai';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Streamdown } from 'streamdown';
 import { cjk } from '@streamdown/cjk';
 import { code } from '@streamdown/code';
 import { math } from '@streamdown/math';
 import { mermaid } from '@streamdown/mermaid';
+import { cn } from 'cn';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup, ButtonGroupText } from '@/components/ui/button-group';
@@ -26,7 +27,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage['role'];

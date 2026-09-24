@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cn } from 'cn';
 import { LuGithub } from 'react-icons/lu';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 async function getGitHubStars() {
   const response = await fetch(

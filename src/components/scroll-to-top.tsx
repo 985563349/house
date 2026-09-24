@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpIcon } from 'lucide-react';
 import { useMotionValueEvent, useScroll } from 'motion/react';
+import { cn } from 'cn';
+import { ArrowUpIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 const ScrollToTop = () => {
   const { scrollY } = useScroll();

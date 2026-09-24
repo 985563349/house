@@ -3,7 +3,7 @@
 import type { HTMLAttributes } from 'react';
 import type { MarqueeProps as FastMarqueeProps } from 'react-fast-marquee';
 import FastMarquee from 'react-fast-marquee';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type MarqueeProps = HTMLAttributes<HTMLDivElement>;
 

@@ -1,7 +1,7 @@
 ---
 title: '深入服务端渲染（下）'
 date: 2024-12-11T16:00:00.000Z
-description: "用 React、Express 和 Vite 搭建同构渲染，串起水合、路由与数据获取。"
+description: '用 React、Express 和 Vite 搭建同构渲染，串起水合、路由与数据获取。'
 categories:
   - React
   - SSR
@@ -9,7 +9,7 @@ categories:
 
 你可以阅读下面的内容了解同构渲染的实现，也可以直接跳到[这里](https://github.com/985563349/vite-ssr/tree/main)查看完整代码。
 
-### 渲染
+## 渲染
 
 传统服务端渲染通常会使用 PHP 或者 Java 等语言进行开发，而同构渲染我们一般会使用 Node.JS 来开发服务端的部分。
 
@@ -189,7 +189,7 @@ app.listen(3000, () => {
 
 接下来，我们在客户端完成水合，实现交互。
 
-### 水合
+## 水合
 
 首先，在 src 目录中创建一个 entry-client.jsx 文件，这个文件是客户端渲染的入口文件：
 
@@ -246,7 +246,7 @@ app.use('*', async (req, res) => {
 
 至此，我们已经完成了一个基本的同构渲染。下一步，我们来实现一下路由。
 
-### 路由
+## 路由
 
 在本节中，我们将基于 react-router-dom 实现一个文件路由系统。
 
@@ -337,7 +337,7 @@ import routes from './routes';
 // !diff(start) +
 export async function render({ url }) {
   const html = renderToString(createRouter({ routes, url }));
-// !diff(end)
+  // !diff(end)
 
   return { html };
 }
@@ -423,7 +423,7 @@ export default function Other() {
 
 下一步，我们来实现一个 getServerSideProps 函数，实现服务端数据预取。
 
-### getServerSideProps
+## getServerSideProps
 
 首先，我们修改一下 index.html 文件：
 
@@ -545,7 +545,7 @@ import routes from './routes';
 export async function render({ url, ctx }) {
   const [router] = matchRoutes(routes, url);
   const { getServerSideProps } = router.route;
-// !diff(end)
+  // !diff(end)
 
   // !diff(start) +
   if (getServerSideProps) {
@@ -623,7 +623,7 @@ export function createRouter({ ctx, routes, url }) {
 
 最后，重启一下项目，你应该能够看到在根路由页面中显示了 Hobby 列表。
 
-### 客户端的 getServerSideProps
+## 客户端的 getServerSideProps
 
 我们目前已经实现了首屏渲染时，在服务端调用 getServerSideProps 函数来获取数据。但我们还有没实现，在客户端渲染时调用 getServerSideProps 函数来获取数据。
 

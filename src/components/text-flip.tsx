@@ -3,8 +3,7 @@
 import { Children, useEffect, useState } from 'react';
 import type { Transition, Variants } from 'motion/react';
 import { AnimatePresence, motion } from 'motion/react';
-
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 const defaultVariants: Variants = {
   initial: { y: '-20%', opacity: 0, filter: 'blur(1px)' },

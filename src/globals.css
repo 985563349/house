@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @plugin "@tailwindcss/typography";
 
@@ -109,7 +109,7 @@
   --ch-26: #ffffffe6;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* zinc-950 */
   --background: oklch(0.141 0.005 285.823);
 
@@ -277,6 +277,10 @@
   ::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 5px;
+  }
+
+  html {
+    @apply overscroll-none;
   }
 
   body {
